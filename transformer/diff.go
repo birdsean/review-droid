@@ -3,6 +3,7 @@ package transformer
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -74,9 +75,41 @@ func (dt *DiffTransformer) generateSegments() {
 }
 
 func (dt *DiffTransformer) numberRawDiff() {
-	segments := []string{}
-	for i, line := range strings.Split(dt.rawDiff, "\n") {
-		segments = append(segments, fmt.Sprintf("%d %s", i+1, line))
+	// number each line of the diff, looking at the header like "@@ -2,13 +2,15 @@" to know that the first line is line 2
+	splitDiff := strings.Split(dt.rawDiff, "\n")
+	rmLineNumber := 0
+	addLineNumber := 0
+	for i, line := range splitDiff {
+		if strings.HasPrefix(line, "@@") {
+			rmLineNumber, addLineNumber = getLineNumbers(line)
+		} else if strings.HasPrefix(line, "-") {
+			splitDiff[i] = fmt.Sprintf("%d %s", rmLineNumber, line)
+			rmLineNumber++
+		} else if strings.HasPrefix(line, "+") {
+			splitDiff[i] = fmt.Sprintf("%d %s", addLineNumber, line)
+			addLineNumber++
+		} else {
+			rmLineNumber++
+			addLineNumber++
+		}
 	}
-	dt.numberedRawDiff = strings.Join(segments, "\n")
+	dt.numberedRawDiff = strings.Join(splitDiff, "\n")
+}
+
+func getLineNumbers(line string) (int, int) {
+	match := regexp.MustCompile(`@@ -(\d+),(\d+) \+(\d+),(\d+) @@`).FindStringSubmatch(line)
+	if len(match) == 0 {
+		return 0, 0
+	}
+	rmStart := match[1]
+	addStart := match[3]
+	rmStartInt, err := strconv.Atoi(rmStart)
+	if err != nil {
+		fmt.Println(err)
+	}
+	addStartInt, err := strconv.Atoi(addStart)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return rmStartInt, addStartInt
 }

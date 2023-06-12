@@ -68,11 +68,14 @@ func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comme
 
 	fmt.Printf("Line of Code: %d\n", parsed.CodeLine)
 	fmt.Printf("File address: %s\n", parsed.FileAddress)
-	return &github.PullRequestComment{
+
+	comment := &github.PullRequestComment{
 		Body:     github.String(parsed.CommentBody),
-		Path:     github.String(parsed.FileAddress),
+		Path:     github.String("transformer/diff.go"),
 		CommitID: github.String(commitID),
-		Side:     github.String("RIGHT"), // TODO comments.Comment has to know which side it's on
-		Line:     github.Int(1),
+		Side:     github.String("RIGHT"),
+		Line:     github.Int(10),
 	}
+
+	return comment
 }
