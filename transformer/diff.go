@@ -11,7 +11,7 @@ type DiffTransformer struct {
 	segments  []string
 }
 
-const segmentLength = 2000
+const segmentLength = 4000
 
 func (dt *DiffTransformer) Transform(rawDiff string) {
 	dt.rawDiff = rawDiff
@@ -23,6 +23,10 @@ func (dt *DiffTransformer) Transform(rawDiff string) {
 
 func (dt *DiffTransformer) GetLastSegment() string {
 	return dt.segments[len(dt.segments)-1]
+}
+
+func (dt *DiffTransformer) GetSegments() []string {
+	return dt.segments
 }
 
 func (dt *DiffTransformer) splitIntoFiles() {
@@ -41,18 +45,24 @@ func (dt *DiffTransformer) generateSegments() {
 	segments := []string{}
 	for _, file := range dt.fileDiffs {
 		splitDiff := strings.Split(file, "\n")
-		charCount := 0
+		wordCount := 0
 		for i, line := range splitDiff {
-			charCount += len(line)
-			if charCount > segmentLength {
+			wordCount += len(strings.Split(line, " "))
+			if wordCount > segmentLength {
 				pendingSegment := splitDiff[:i]
 				numbered := dt.numberLines(pendingSegment)
 				newSegment := strings.Join(numbered, "\n")
 				segments = append(segments, newSegment)
 				splitDiff = splitDiff[i:]
-				charCount = 0
+				wordCount = 0
 			}
-			splitDiff[i] = fmt.Sprintf("%d %s", i, line)
+			// append last segment
+			if i == len(splitDiff)-1 {
+				pendingSegment := splitDiff
+				numbered := dt.numberLines(pendingSegment)
+				newSegment := strings.Join(numbered, "\n")
+				segments = append(segments, newSegment)
+			}
 		}
 		segments = append(segments, strings.Join(splitDiff, "\n"))
 	}

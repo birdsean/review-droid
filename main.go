@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 
 	"github.com/birdsean/review-droid/github"
@@ -31,16 +33,40 @@ func main() {
 		diffTransformer := transformer.DiffTransformer{}
 		diffTransformer.Transform(diff)
 
-		segment := diffTransformer.GetLastSegment()
-
-		openAiClient := openai.OpenAiClient{}
-		openAiClient.Init()
-		completion, err := openAiClient.GetCompletion(segment)
-		if err != nil {
-			log.Fatalf("Failed to get completion: %v", err)
+		segments := diffTransformer.GetSegments()
+		allComments := []string{}
+		fmt.Printf("Getting commments for %d segments\n", len(segments))
+		for _, segment := range segments {
+			comment := retrieveComments(segment)
+			allComments = append(allComments, comment)
 		}
 
-		log.Println("********************")
-		log.Println(*completion)
+		writeResults(allComments)
+	}
+}
+
+func retrieveComments(segment string) string {
+	openAiClient := openai.OpenAiClient{}
+	openAiClient.Init()
+	completion, err := openAiClient.GetCompletion(segment)
+	if err != nil {
+		fmt.Printf("Failed to get completion: %v\n", err)
+	}
+
+	fmt.Println("********************")
+	fmt.Println(*completion)
+	fmt.Println("********************")
+	return *completion
+}
+
+func writeResults(comments []string) {
+	fileContents, err := json.Marshal(comments)
+	if err != nil {
+		log.Fatalf("Failed to marshal comments: %v", err)
+	}
+	// save fileContents to results.json
+	err = ioutil.WriteFile("results.json", fileContents, 0644)
+	if err != nil {
+		log.Fatalf("Failed to write comments to file: %v", err)
 	}
 }
