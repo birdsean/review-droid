@@ -21,6 +21,10 @@ func (dt *DiffTransformer) Transform(rawDiff string) {
 	dt.generateSegments()
 }
 
+func (dt *DiffTransformer) GetLastSegment() string {
+	return dt.segments[len(dt.segments)-1]
+}
+
 func (dt *DiffTransformer) generateSegments() {
 	segments := []string{}
 	for _, file := range dt.fileDiffs {
@@ -45,11 +49,7 @@ func (dt *DiffTransformer) generateSegments() {
 
 func (dt *DiffTransformer) numberLines(segments []string) []string {
 	for i, segment := range segments {
-		splitDiff := strings.Split(segment, "\n")
-		for i, line := range splitDiff {
-			splitDiff[i] = fmt.Sprintf("%d %s", i, line)
-		}
-		segments[i] = strings.Join(splitDiff, "\n")
+		segments[i] = fmt.Sprintf("%d %s", i, segment)
 	}
 	return segments
 }

@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"github.com/birdsean/review-droid/github"
+	"github.com/birdsean/review-droid/openai"
+	"github.com/birdsean/review-droid/transformer"
 )
 
 func main() {
@@ -25,6 +27,19 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to get raw diff: %v", err)
 		}
-		fmt.Printf("Diff: %s\n", diff)
+
+		diffTransformer := transformer.DiffTransformer{}
+		diffTransformer.Transform(diff)
+
+		segment := diffTransformer.GetLastSegment()
+
+		openAiClient := openai.OpenAiClient{}
+		openAiClient.Init()
+		completion, err := openAiClient.GetCompletion(segment)
+		if err != nil {
+			log.Fatalf("Failed to get completion: %v", err)
+		}
+
+		log.Println(completion)
 	}
 }
