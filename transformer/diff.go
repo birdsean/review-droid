@@ -17,12 +17,24 @@ func (dt *DiffTransformer) Transform(rawDiff string) {
 	dt.rawDiff = rawDiff
 
 	// Split diff into files
-	dt.fileDiffs = strings.Split(dt.rawDiff, "diff --git")
+	dt.splitIntoFiles()
 	dt.generateSegments()
 }
 
 func (dt *DiffTransformer) GetLastSegment() string {
 	return dt.segments[len(dt.segments)-1]
+}
+
+func (dt *DiffTransformer) splitIntoFiles() {
+	dt.fileDiffs = strings.Split(dt.rawDiff, "diff --git")
+	// remove all empty strings from dt.fileDiffs
+	for i := 0; i < len(dt.fileDiffs); i++ {
+		dt.fileDiffs[i] = strings.TrimSpace(dt.fileDiffs[i])
+		if dt.fileDiffs[i] == "" {
+			dt.fileDiffs = append(dt.fileDiffs[:i], dt.fileDiffs[i+1:]...)
+			i--
+		}
+	}
 }
 
 func (dt *DiffTransformer) generateSegments() {
