@@ -2,6 +2,7 @@ package github_client
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -59,12 +60,19 @@ func (grc *GithubRepoClient) PostComment(pr *github.PullRequest, comment *github
 	return err
 }
 
-func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comment) *github.PullRequestComment {
-	// remove a/ or b/ from file address
-	parsed.FileAddress = parsed.FileAddress[2:]
+func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comment, commitID string) *github.PullRequestComment {
+	// Remove "a/" or "b/" from file address
+	if parsed.FileAddress[:2] == "a/" || parsed.FileAddress[:2] == "b/" {
+		parsed.FileAddress = parsed.FileAddress[2:]
+	}
+
+	fmt.Printf("Line of Code: %d\n", parsed.CodeLine)
+	fmt.Printf("File address: %s\n", parsed.FileAddress)
 	return &github.PullRequestComment{
-		Body:     &parsed.CommentBody,
-		Position: &parsed.CodeLine,
-		Path:     &parsed.FileAddress,
+		Body:     github.String(parsed.CommentBody),
+		Path:     github.String(parsed.FileAddress),
+		CommitID: github.String(commitID),
+		Side:     github.String("RIGHT"), // TODO comments.Comment has to know which side it's on
+		Line:     github.Int(1),
 	}
 }

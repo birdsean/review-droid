@@ -33,8 +33,7 @@ func (dt *DiffTransformer) splitIntoFiles() {
 	dt.fileDiffs = make(map[string]string)
 
 	for _, file := range fileDiffs {
-		// extract file name from line "+++ b/path/to/file" with regex
-		match := regexp.MustCompile(`\+\+\+ b/(.*)`).FindStringSubmatch(file)
+		match := regexp.MustCompile(`[\+\-]{3} [a|b]/(.*)`).FindStringSubmatch(file)
 		if len(file) == 0 || len(match) == 0 {
 			continue
 		}
@@ -44,7 +43,7 @@ func (dt *DiffTransformer) splitIntoFiles() {
 		// remove all lines that start with "+++", "---", or "@@"
 		lines := strings.Split(file, "\n")
 		for j := 0; j < len(lines); j++ {
-			if strings.HasPrefix(lines[j], "+++") || strings.HasPrefix(lines[j], "---") || strings.HasPrefix(lines[j], "@@") {
+			if strings.Contains(lines[j], "+++") || strings.Contains(lines[j], "---") || strings.Contains(lines[j], "@@") {
 				lines = append(lines[:j], lines[j+1:]...)
 				j--
 			} else {

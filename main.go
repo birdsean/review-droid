@@ -23,10 +23,11 @@ func main() {
 	// Iterate over each pull request
 	for _, pr := range prs {
 		comments := reviewPR(pr, client)
+		commitId := pr.GetHead().GetSHA()
 		for _, comment := range comments {
 			// post to github
 			fmt.Printf("Posting comment to PR #%d\n", pr.GetNumber())
-			ghComment := client.ParsedCommentToGithubComment(comment)
+			ghComment := client.ParsedCommentToGithubComment(comment, commitId)
 			err := client.PostComment(pr, ghComment)
 			if err != nil {
 				log.Fatalf("Failed to post comment: %v", err)
@@ -49,14 +50,14 @@ func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*
 
 	fileSegments := diffTransformer.GetFileSegments()
 	allComments := []*comments.Comment{}
-	failedComments := []string{}
+	// failedComments := []string{}
 
 	fmt.Printf("Getting comments for %d segments\n", len(fileSegments))
 	for filename, segments := range fileSegments {
 		for _, segment := range segments {
 			comment := retrieveComments(segment)
 			if comment == nil {
-				failedComments = append(failedComments, segment)
+				// failedComments = append(failedComments, segment)
 				continue
 			}
 			zippedComments, err := comments.ZipComment(segment, *comment, filename)
@@ -64,6 +65,12 @@ func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*
 				log.Fatalf("Failed to zip comment: %v", err)
 			}
 			allComments = append(allComments, zippedComments...)
+			if len(allComments) >= 1 {
+				break
+			}
+		}
+		if len(allComments) >= 1 {
+			break
 		}
 	}
 
