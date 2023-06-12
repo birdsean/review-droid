@@ -2,13 +2,14 @@ package transformer
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
 type DiffTransformer struct {
-	rawDiff   string
-	fileDiffs []string
-	segments  []string
+	rawDiff      string
+	fileDiffs    map[string]string
+	fileSegments map[string][]string
 }
 
 const segmentLength = 4000
@@ -21,30 +22,41 @@ func (dt *DiffTransformer) Transform(rawDiff string) {
 	dt.generateSegments()
 }
 
-func (dt *DiffTransformer) GetLastSegment() string {
-	return dt.segments[len(dt.segments)-1]
-}
-
-func (dt *DiffTransformer) GetSegments() []string {
-	return dt.segments
+func (dt *DiffTransformer) GetFileSegments() map[string][]string {
+	return dt.fileSegments
 }
 
 func (dt *DiffTransformer) splitIntoFiles() {
-	dt.fileDiffs = strings.Split(dt.rawDiff, "diff --git")
-	// remove all empty strings from dt.fileDiffs
-	for i := 0; i < len(dt.fileDiffs); i++ {
-		dt.fileDiffs[i] = strings.TrimSpace(dt.fileDiffs[i])
-		if dt.fileDiffs[i] == "" {
-			dt.fileDiffs = append(dt.fileDiffs[:i], dt.fileDiffs[i+1:]...)
-			i--
+	fileDiffs := strings.Split(dt.rawDiff, "diff --git")
+	dt.fileDiffs = make(map[string]string)
+
+	for _, file := range fileDiffs {
+		// extract file name from line "+++ b/path/to/file" with regex
+		match := regexp.MustCompile(`\+\+\+ b/(.*)`).FindStringSubmatch(file)
+		if len(file) == 0 || len(match) == 0 {
+			continue
+		}
+
+		fileName := match[1]
+
+		// remove all lines that start with "+++", "---", or "@@"
+		lines := strings.Split(file, "\n")
+		for j := 0; j < len(lines); j++ {
+			if strings.HasPrefix(lines[j], "+++") || strings.HasPrefix(lines[j], "---") || strings.HasPrefix(lines[j], "@@") {
+				lines = append(lines[:j], lines[j+1:]...)
+				j--
+			} else {
+				dt.fileDiffs[fileName] = strings.Join(lines, "\n")
+			}
 		}
 	}
 }
 
 func (dt *DiffTransformer) generateSegments() {
-	segments := []string{}
-	for _, file := range dt.fileDiffs {
-		splitDiff := strings.Split(file, "\n")
+	dt.fileSegments = make(map[string][]string)
+	for filename, diff := range dt.fileDiffs {
+		segments := []string{}
+		splitDiff := strings.Split(diff, "\n")
 		wordCount := 0
 		for i, line := range splitDiff {
 			wordCount += len(strings.Split(line, " "))
@@ -57,9 +69,10 @@ func (dt *DiffTransformer) generateSegments() {
 				wordCount = 0
 			}
 		}
-		segments = append(segments, strings.Join(splitDiff, "\n"))
+		numbered := dt.numberLines(splitDiff)
+		newSegment := strings.Join(numbered, "\n")
+		dt.fileSegments[filename] = append(segments, newSegment)
 	}
-	dt.segments = segments
 }
 
 func (dt *DiffTransformer) numberLines(segments []string) []string {

@@ -1,6 +1,9 @@
 package comments
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,7 +15,7 @@ type Comment struct {
 	FileAddress string
 }
 
-func ZipComments(segment string, comments string) ([]Comment, error) {
+func ZipComment(segment string, comments string) ([]*Comment, error) {
 	// create struct with keys: line number value: segment line
 	lineReference := make(map[int]string)
 	codeLines := strings.Split(segment, "\n")
@@ -26,7 +29,7 @@ func ZipComments(segment string, comments string) ([]Comment, error) {
 		lineReference[(lineInt)] = line
 	}
 
-	parsedComments := []Comment{}
+	parsedComments := []*Comment{}
 	splitComments := strings.Split(comments, "\n")
 	for _, comment := range splitComments {
 		if strings.Contains(comment, "No comment") {
@@ -47,7 +50,21 @@ func ZipComments(segment string, comments string) ([]Comment, error) {
 			CommentBody: commentBody,
 			FileAddress: "TODO",
 		}
-		parsedComments = append(parsedComments, comment)
+		parsedComments = append(parsedComments, &comment)
 	}
 	return parsedComments, nil
+}
+
+func Main() {
+	// Read results.json.test JSON file
+	results := []string{}
+	file, err := ioutil.ReadFile("results.json.test")
+	if err != nil {
+		log.Fatalf("Failed to read file: %v", err)
+	}
+	err = json.Unmarshal(file, &results)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal file: %v", err)
+	}
+
 }

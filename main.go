@@ -1,11 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 
+	"github.com/birdsean/review-droid/comments"
 	"github.com/birdsean/review-droid/github"
 	"github.com/birdsean/review-droid/openai"
 	"github.com/birdsean/review-droid/transformer"
@@ -33,15 +32,22 @@ func main() {
 		diffTransformer := transformer.DiffTransformer{}
 		diffTransformer.Transform(diff)
 
-		segments := diffTransformer.GetSegments()
-		allComments := []string{}
-		fmt.Printf("Getting commments for %d segments\n", len(segments))
-		for _, segment := range segments {
-			comment := retrieveComments(segment)
-			allComments = append(allComments, comment)
+		fileSegments := diffTransformer.GetFileSegments()
+		allComments := []*comments.Comment{}
+		fmt.Printf("Getting comments for %d segments\n", len(fileSegments))
+		for filename, segments := range fileSegments {
+			fmt.Print("///////////////////////////////////////////\n")
+			fmt.Printf("Getting comments for file: %s\n", filename)
+			fmt.Printf("Getting comments for segment: %s\n", segments)
+			// comment := retrieveComments(segment)
+			// zippedComments, err := comments.ZipComment(segment, comment)
+			// if err != nil {
+			// 	log.Fatalf("Failed to zip comment: %v", err)
+			// }
+			// allComments = append(allComments, zippedComments...)
 		}
 
-		writeResults(allComments)
+		fmt.Printf("allComments: %v\n", allComments)
 	}
 }
 
@@ -57,16 +63,4 @@ func retrieveComments(segment string) string {
 	fmt.Println(*completion)
 	fmt.Println("********************")
 	return *completion
-}
-
-func writeResults(comments []string) {
-	fileContents, err := json.Marshal(comments)
-	if err != nil {
-		log.Fatalf("Failed to marshal comments: %v", err)
-	}
-	// save fileContents to results.json
-	err = ioutil.WriteFile("results.json.test", fileContents, 0644)
-	if err != nil {
-		log.Fatalf("Failed to write comments to file: %v", err)
-	}
 }

@@ -8,8 +8,8 @@ import (
 func TestDiffTransformer_numberLines(t *testing.T) {
 	type fields struct {
 		rawDiff   string
-		fileDiffs []string
-		segments  []string
+		fileDiffs map[string]string
+		segments  map[string][]string
 	}
 	type args struct {
 		segments []string
@@ -24,8 +24,8 @@ func TestDiffTransformer_numberLines(t *testing.T) {
 			"numberLines",
 			fields{
 				"",
-				[]string{},
-				[]string{},
+				map[string]string{},
+				map[string][]string{},
 			},
 			args{
 				[]string{
@@ -44,9 +44,9 @@ func TestDiffTransformer_numberLines(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dt := &DiffTransformer{
-				rawDiff:   tt.fields.rawDiff,
-				fileDiffs: tt.fields.fileDiffs,
-				segments:  tt.fields.segments,
+				rawDiff:      tt.fields.rawDiff,
+				fileDiffs:    tt.fields.fileDiffs,
+				fileSegments: tt.fields.segments,
 			}
 			got := strings.Join(dt.numberLines(tt.args.segments), ",")
 			want := strings.Join(tt.want, ",")
@@ -117,8 +117,8 @@ index 0000000..aab42e0
 func TestDiffTransformer_splitIntoFiles(t *testing.T) {
 	type fields struct {
 		rawDiff   string
-		fileDiffs []string
-		segments  []string
+		fileDiffs map[string]string
+		segments  map[string][]string
 	}
 	tests := []struct {
 		name   string
@@ -128,17 +128,17 @@ func TestDiffTransformer_splitIntoFiles(t *testing.T) {
 			"splitIntoFiles",
 			fields{
 				TEST_DIFF,
-				[]string{},
-				[]string{},
+				map[string]string{},
+				map[string][]string{},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dt := &DiffTransformer{
-				rawDiff:   tt.fields.rawDiff,
-				fileDiffs: tt.fields.fileDiffs,
-				segments:  tt.fields.segments,
+				rawDiff:      tt.fields.rawDiff,
+				fileDiffs:    tt.fields.fileDiffs,
+				fileSegments: tt.fields.segments,
 			}
 			dt.splitIntoFiles()
 			if len(dt.fileDiffs) != 4 {
