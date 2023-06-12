@@ -20,6 +20,8 @@ const systemMessage = `
 	If the problem is a suggestion, prefix your comment with "Suggestion:".
 	If the problem is a request for clarification, prefix your comment with "Clarification:".
 	If the problem is a request for more information, prefix your comment with "More Info:".
+	If a unit test of critical functionality is missing, prefix your comment with "Missing Test:".
+	If a unit test could use some more test cases, prefix your comment with "Suggested Test Cases:".
 	An example response would look like this:
 		"Bug: [Line 42] missing semicolon"
 	Do not nitpick. Comments must be high quality and pithy. Include code snippets if necessary.	
