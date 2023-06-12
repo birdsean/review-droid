@@ -40,6 +40,7 @@ func main() {
 			log.Fatalf("Failed to get completion: %v", err)
 		}
 
-		log.Println(completion)
+		log.Println("********************")
+		log.Println(*completion)
 	}
 }

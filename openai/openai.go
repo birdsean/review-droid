@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -26,6 +27,7 @@ const systemMessage = `
 		"Bug: [Line 42] missing semicolon"
 	Do not nitpick. Comments must be high quality and pithy. Include code snippets if necessary.	
 `
+const CODE_PREVIEW_SIZE = 4
 
 type OpenAiClient struct {
 	client *openai.Client
@@ -40,6 +42,18 @@ func (oac *OpenAiClient) Init() {
 }
 
 func (oac *OpenAiClient) GetCompletion(prompt string) (*string, error) {
+
+	logMsg := "Evaluating code lines:\n"
+	splitLines := strings.Split(prompt, "\n")
+	for i, line := range splitLines {
+		if i < 4 || i > len(splitLines)-4 {
+			logMsg += line + "\n"
+		} else if i == 4 {
+			logMsg += "...\n"
+		}
+	}
+	log.Print(logMsg)
+
 	resp, err := oac.client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
@@ -61,6 +75,11 @@ func (oac *OpenAiClient) GetCompletion(prompt string) (*string, error) {
 		return nil, err
 	}
 
-	log.Println(resp)
+	log.Printf(
+		"PromptTokens: %d\nCompletionTokens: %d\nTotalTokens: %d",
+		resp.Usage.PromptTokens,
+		resp.Usage.CompletionTokens,
+		resp.Usage.TotalTokens,
+	)
 	return &resp.Choices[0].Message.Content, nil
 }
