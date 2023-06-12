@@ -18,8 +18,6 @@ const segmentLength = 4000
 
 func (dt *DiffTransformer) Transform(rawDiff string) {
 	dt.rawDiff = rawDiff
-
-	// Split diff into files
 	dt.numberRawDiff()
 	dt.splitIntoFiles()
 	dt.generateSegments()

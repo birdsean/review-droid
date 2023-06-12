@@ -71,10 +71,10 @@ func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comme
 
 	comment := &github.PullRequestComment{
 		Body:     github.String(parsed.CommentBody),
-		Path:     github.String("transformer/diff.go"),
+		Path:     github.String(parsed.FileAddress),
 		CommitID: github.String(commitID),
-		Side:     github.String("RIGHT"),
-		Line:     github.Int(10),
+		Side:     github.String(parsed.Side),
+		Line:     github.Int(parsed.CodeLine),
 	}
 
 	return comment
