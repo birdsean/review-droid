@@ -8,7 +8,7 @@ import (
 	"github.com/birdsean/review-droid/github_client"
 	"github.com/birdsean/review-droid/openai"
 	"github.com/birdsean/review-droid/transformer"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v53/github"
 )
 
 func main() {

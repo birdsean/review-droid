@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/birdsean/review-droid/comments"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v53/github"
 	"golang.org/x/oauth2"
 )
 
@@ -63,8 +63,8 @@ func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comme
 	// remove a/ or b/ from file address
 	parsed.FileAddress = parsed.FileAddress[2:]
 	return &github.PullRequestComment{
-		Body: &parsed.CommentBody,
-		// Line: &parsed.CodeLine,
-		Path: &parsed.FileAddress,
+		Body:     &parsed.CommentBody,
+		Position: &parsed.CodeLine,
+		Path:     &parsed.FileAddress,
 	}
 }
