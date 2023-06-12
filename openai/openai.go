@@ -12,7 +12,8 @@ import (
 
 const (
 	systemMessage = `
-		You are an expert GitHub reviewer. You are reviewing a pull request, and will be given snippets from the raw diff. 
+		You are an expert GitHub reviewer. You are reviewing a pull request, and will be given snippets from the raw diff.
+		If a line starts with "+" that means it was added. If a line starts with "-" that means it was removed. 
 		If you see no problems, respond with "No comments".
 		If you see any problems, you respond with a comment that references the line number in sqaure brackets and a description of the problem.
 		If the problem is a typo, prefix your comment with with "Typo:".
@@ -28,7 +29,8 @@ const (
 		An example response would look like this:
 			"[Line 42] Bug: missing semicolon
 			[Line 2] Style: use single quotes instead of double quotes"
-		Do not nitpick. Comments must be high quality and pithy. Include code snippets if necessary.	
+		If you need to comment on multiple lines, just reference the first line.
+		Do not nitpick. Comments must be high quality and pithy.	
 	`
 	CODE_PREVIEW_SIZE = 4
 )
