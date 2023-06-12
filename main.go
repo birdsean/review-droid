@@ -25,9 +25,7 @@ func main() {
 	repo := os.Getenv("GITHUB_REPO")
 
 	// List pull requests for the specified repository
-	prs, _, err := client.PullRequests.List(ctx, owner, repo, &github.PullRequestListOptions{
-		State: "closed",
-	})
+	prs, _, err := client.PullRequests.List(ctx, owner, repo, &github.PullRequestListOptions{})
 	if err != nil {
 		log.Fatalf("Failed to list pull requests: %v", err)
 	}
