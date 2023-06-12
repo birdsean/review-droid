@@ -114,28 +114,6 @@ index 0000000..aab42e0
 +       // code here
 +}`
 
-func TestDiffTransformer_generateSegments(t *testing.T) {
-	type fields struct {
-		rawDiff   string
-		fileDiffs []string
-		segments  []string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-	}{}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			dt := &DiffTransformer{
-				rawDiff:   tt.fields.rawDiff,
-				fileDiffs: tt.fields.fileDiffs,
-				segments:  tt.fields.segments,
-			}
-			dt.generateSegments()
-		})
-	}
-}
-
 func TestDiffTransformer_splitIntoFiles(t *testing.T) {
 	type fields struct {
 		rawDiff   string
