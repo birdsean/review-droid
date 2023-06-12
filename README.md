@@ -6,8 +6,8 @@ This is a simple app that will utilize AI to do an initial pass on your code rev
 
 ### MVP
 - [x] Code Retrieval: Implement the functionality to fetch the code changes from the pull request. Use env vars for permissions.
-- [ ] Language Model Integration: Integrate with OpenAI API.
-- [ ] Code Analysis: Feed the code changes retrieved from the pull request into the LLM. Extract comments or suggestions related to code quality, potential bugs, or best practices from the LLM's output.
+- [x] Language Model Integration: Integrate with OpenAI API.
+- [x] Code Analysis: Feed the code changes retrieved from the pull request into the LLM. Extract comments or suggestions related to code quality, potential bugs, or best practices from the LLM's output.
 - [ ] Comment Posting: Develop the functionality to post the extracted comments and suggestions as comments directly on the pull request within the GitHub interface.
 
 ### Backlog
