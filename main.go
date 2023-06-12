@@ -22,11 +22,20 @@ func main() {
 
 	// Iterate over each pull request
 	for _, pr := range prs {
-		reviewPR(pr, client)
+		comments := reviewPR(pr, client)
+		for _, comment := range comments {
+			// post to github
+			fmt.Printf("Posting comment to PR #%d\n", pr.GetNumber())
+			ghComment := client.ParsedCommentToGithubComment(comment)
+			err := client.PostComment(pr, ghComment)
+			if err != nil {
+				log.Fatalf("Failed to post comment: %v", err)
+			}
+		}
 	}
 }
 
-func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) {
+func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*comments.Comment {
 	fmt.Printf("PR #%d: %s\n", pr.GetNumber(), pr.GetTitle())
 
 	fmt.Printf("Getting diff for PR #%d\n", pr.GetNumber())
@@ -58,17 +67,7 @@ func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) {
 		}
 	}
 
-	fmt.Println("Comments:")
-	for _, comment := range allComments {
-		fmt.Printf("%+v\n", comment)
-	}
-
-	if len(failedComments) == 0 {
-		fmt.Println("Failed to get comments for the following segments:")
-		for _, comment := range failedComments {
-			fmt.Printf("Failed to get comment for segment: %s\n", comment)
-		}
-	}
+	return allComments
 }
 
 func retrieveComments(segment string) *string {

@@ -7,24 +7,12 @@ import (
 )
 
 type Comment struct {
-	Code        string
+	CodeLine    int
 	CommentBody string
 	FileAddress string
 }
 
 func ZipComment(segment, comments, filename string) ([]*Comment, error) {
-	// create struct with keys: line number value: segment line
-	lineReference := make(map[int]string)
-	codeLines := strings.Split(segment, "\n")
-	for _, line := range codeLines {
-		lineNumber := regexp.MustCompile(`^(\d+)`).FindStringSubmatch(line)[1]
-		lineInt, err := strconv.Atoi(lineNumber)
-		if err != nil {
-			return nil, err
-		}
-		lineReference[(lineInt)] = line
-	}
-
 	parsedComments := []*Comment{}
 	splitComments := strings.Split(comments, "\n")
 	for _, comment := range splitComments {
@@ -47,7 +35,7 @@ func ZipComment(segment, comments, filename string) ([]*Comment, error) {
 
 		// compile comment body and code
 		comment := Comment{
-			Code:        lineReference[lineInt],
+			CodeLine:    lineInt,
 			CommentBody: commentBody,
 			FileAddress: filename,
 		}

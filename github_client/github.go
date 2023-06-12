@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/birdsean/review-droid/comments"
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 )
@@ -51,4 +52,19 @@ func (grc *GithubRepoClient) GetPrs() ([]*github.PullRequest, error) {
 func (grc *GithubRepoClient) GetPrDiff(pr *github.PullRequest) (string, error) {
 	diff, _, err := grc.client.PullRequests.GetRaw(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), github.RawOptions{Type: github.Diff})
 	return diff, err
+}
+
+func (grc *GithubRepoClient) PostComment(pr *github.PullRequest, comment *github.PullRequestComment) error {
+	_, _, err := grc.client.PullRequests.CreateComment(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), comment)
+	return err
+}
+
+func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comment) *github.PullRequestComment {
+	// remove a/ or b/ from file address
+	parsed.FileAddress = parsed.FileAddress[2:]
+	return &github.PullRequestComment{
+		Body: &parsed.CommentBody,
+		// Line: &parsed.CodeLine,
+		Path: &parsed.FileAddress,
+	}
 }

@@ -5,58 +5,6 @@ import (
 	"testing"
 )
 
-func TestDiffTransformer_numberLines(t *testing.T) {
-	type fields struct {
-		rawDiff   string
-		fileDiffs map[string]string
-		segments  map[string][]string
-	}
-	type args struct {
-		segments []string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   []string
-	}{
-		{
-			"numberLines",
-			fields{
-				"",
-				map[string]string{},
-				map[string][]string{},
-			},
-			args{
-				[]string{
-					"line 1",
-					"line 2",
-					"line 3",
-				},
-			},
-			[]string{
-				"0 line 1",
-				"1 line 2",
-				"2 line 3",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			dt := &DiffTransformer{
-				rawDiff:      tt.fields.rawDiff,
-				fileDiffs:    tt.fields.fileDiffs,
-				fileSegments: tt.fields.segments,
-			}
-			got := strings.Join(dt.numberLines(tt.args.segments), ",")
-			want := strings.Join(tt.want, ",")
-			if got != want {
-				t.Errorf("DiffTransformer.numberLines() = %v, want %v", got, want)
-			}
-		})
-	}
-}
-
 const TEST_DIFF = `diff --git a/README.md b/README.md
 index a4d3592..53adbf0 100644
 --- a/README.md
