@@ -26,8 +26,8 @@ const (
 		If a unit test of critical functionality is missing, prefix your comment with "Missing Test:".
 		If a unit test could use some more test cases, prefix your comment with "Suggested Test Cases:".
 		An example response would look like this:
-			"Bug: [Line 42] missing semicolon
-			Style: [Line 2] use single quotes instead of double quotes"
+			"[Line 42] Bug: missing semicolon
+			[Line 2] Style: use single quotes instead of double quotes"
 		Do not nitpick. Comments must be high quality and pithy. Include code snippets if necessary.	
 	`
 	CODE_PREVIEW_SIZE = 4
