@@ -56,13 +56,6 @@ func (dt *DiffTransformer) generateSegments() {
 				splitDiff = splitDiff[i:]
 				wordCount = 0
 			}
-			// append last segment
-			if i == len(splitDiff)-1 {
-				pendingSegment := splitDiff
-				numbered := dt.numberLines(pendingSegment)
-				newSegment := strings.Join(numbered, "\n")
-				segments = append(segments, newSegment)
-			}
 		}
 		segments = append(segments, strings.Join(splitDiff, "\n"))
 	}

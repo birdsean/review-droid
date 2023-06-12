@@ -80,7 +80,7 @@ func (oac *OpenAiClient) GetCompletion(prompt string) (*string, error) {
 	}
 
 	fmt.Printf(
-		"PromptTokens:\t\t%d\nCompletionTokens:\t\t%d\nTotalTokens:\t\t%d",
+		"PromptTokens:\t\t%d\nCompletionTokens:\t\t%d\nTotalTokens:\t\t%d\n",
 		resp.Usage.PromptTokens,
 		resp.Usage.CompletionTokens,
 		resp.Usage.TotalTokens,

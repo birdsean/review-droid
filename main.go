@@ -65,7 +65,7 @@ func writeResults(comments []string) {
 		log.Fatalf("Failed to marshal comments: %v", err)
 	}
 	// save fileContents to results.json
-	err = ioutil.WriteFile("results.json", fileContents, 0644)
+	err = ioutil.WriteFile("results.json.test", fileContents, 0644)
 	if err != nil {
 		log.Fatalf("Failed to write comments to file: %v", err)
 	}

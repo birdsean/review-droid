@@ -29,6 +29,10 @@ func ZipComments(segment string, comments string) ([]Comment, error) {
 	parsedComments := []Comment{}
 	splitComments := strings.Split(comments, "\n")
 	for _, comment := range splitComments {
+		if strings.Contains(comment, "No comment") {
+			continue
+		}
+
 		match := regexp.MustCompile(`\[Line (\d+)\](.*)`).FindStringSubmatch(comment)
 		lineNumber := match[1]
 		commentBody := match[2]
