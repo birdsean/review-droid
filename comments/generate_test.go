@@ -44,6 +44,34 @@ func Test_generateComment(t *testing.T) {
 				Side:        "LEFT",
 			},
 		},
+		{
+			name: "missing plus or minus",
+			args: args{
+				"[Line 8] Suggestion: Consider renaming `numberedRawDiff` to `numberedDiff` for simplicity",
+				"8 - func TestDiffTransformer_numberLines(t *testing.T) {",
+				"test.go",
+			},
+			want: &Comment{
+				CodeLine:    8,
+				CommentBody: "Suggestion: Consider renaming `numberedRawDiff` to `numberedDiff` for simplicity",
+				FileAddress: "test.go",
+				Side:        "LEFT",
+			},
+		},
+		{
+			name: "detects plus correctly",
+			args: args{
+				"[+ Line 8] Suggestion: Consider renaming `numberedRawDiff` to `numberedDiff` for simplicity",
+				"8 + func TestDiffTransformer_numberLines(t *testing.T) {",
+				"test.go",
+			},
+			want: &Comment{
+				CodeLine:    8,
+				CommentBody: "Suggestion: Consider renaming `numberedRawDiff` to `numberedDiff` for simplicity",
+				FileAddress: "test.go",
+				Side:        "RIGHT",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

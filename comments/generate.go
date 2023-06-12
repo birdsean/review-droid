@@ -46,11 +46,27 @@ func generateComment(rawComment, originalCode, filename string) *Comment {
 		return nil
 	}
 
-	// if has minus after line number like: 1 -package github, then side = LEFT
-	// if has plus after line number like:  1 +package github_client, then side = RIGHT
+	// detect if there is a plus or minus in the square brackets
+	sideMatch := regexp.MustCompile(`^\[.*([+-]).*]`).FindStringSubmatch(rawComment)
+	if len(sideMatch) < 2 {
+		// find first + or - in original code
+		plusIdx := strings.Index(originalCode, "+")
+		minusIdx := strings.Index(originalCode, "-")
+		if plusIdx == -1 && minusIdx == -1 {
+			fmt.Printf("Failed to find side of code in rawComment (skipping) %s\n", rawComment)
+			return nil
+		}
+		if plusIdx == -1 {
+			sideMatch = []string{"", "", "-"}
+		}
+		if minusIdx == -1 {
+			sideMatch = []string{"", "", "+"}
+		}
+	}
+
+	sideSymbol := sideMatch[1]
 	side := "RIGHT"
-	col := strings.Split(originalCode, fmt.Sprintf("%d ", lineInt))[1]
-	if strings.HasPrefix(col, "-") {
+	if sideSymbol == "-" {
 		side = "LEFT"
 	}
 
