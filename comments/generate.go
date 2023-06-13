@@ -15,14 +15,14 @@ type Comment struct {
 	Side        string
 }
 
-func ZipComment(segment, comments, filename string) ([]*Comment, error) {
+func ZipComment(segment, comments, filename string, debug bool) ([]*Comment, error) {
 	parsedComments := []*Comment{}
 	splitComments := strings.Split(comments, "\n")
 	for _, comment := range splitComments {
 		if strings.Contains(comment, "No comment") {
 			continue
 		}
-		comment := generateComment(comment, segment, filename, true)
+		comment := generateComment(comment, segment, filename, debug)
 		if comment == nil {
 			continue
 		}
@@ -60,7 +60,6 @@ func extractCodeLineAndComment(rawComment string) (int, int, string, error) {
 	match := regexp.MustCompile(`^\[.*?(\d+)(?:-\d+)?\](.*)`).FindStringSubmatch(rawComment)
 	if len(match) == 0 {
 		fmt.Printf("Failed to find line of code in rawComment (skipping) %s\n", rawComment)
-		fmt.Printf("match: %v\n", match)
 		return 0, 0, "", fmt.Errorf("failed to find line of code in rawComment (skipping)")
 	}
 

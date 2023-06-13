@@ -25,7 +25,7 @@ const (
 		If a unit test could use some more test cases, prefix your comment with "Suggested Test Cases:".
 		Copy the "+" or "-" into your comment prefix before the line number. 
 		Only rarely comment on a line that starts with "-".
-		Only rarely comment on a line that has to do with imports.
+		Do not comment on imports.
 		Do not nitpick. Comments must be high quality and pithy.
 		You can comment on multiple lines.	
 		An example response would look like this:
@@ -34,6 +34,13 @@ const (
 			[+ Line 43] Refactor Suggestion: This code is duplicated in 3 places. Consider refactoring into a function.
 	`
 	CODE_PREVIEW_SIZE = 4
+	followUpMessage   = `Please make correct any line references you may have gone wrong.
+	Remove low quality comments. 
+	Improve your answers where appropriate. 
+	Remove all comments that have to do with import statements.
+	Maintain the same format as your first response.
+	If you answered "No comments", respond with "No comments" again.
+	If no changes are needed from your last response, respond with "No changes".`
 )
 
 type OpenAiClient struct {
@@ -48,18 +55,20 @@ func (oac *OpenAiClient) Init() {
 	oac.client = openai.NewClient(openaiToken)
 }
 
-func (oac *OpenAiClient) GetCompletion(prompt string) (*string, error) {
+func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, error) {
 
-	logMsg := "Evaluating code lines:\n"
-	splitLines := strings.Split(prompt, "\n")
-	for i, line := range splitLines {
-		if i < 4 || i > len(splitLines)-4 {
-			logMsg += line + "\n"
-		} else if i == 4 {
-			logMsg += "...\n"
+	if debug {
+		logMsg := "Evaluating code lines:\n"
+		splitLines := strings.Split(prompt, "\n")
+		for i, line := range splitLines {
+			if i < CODE_PREVIEW_SIZE || i > len(splitLines)-CODE_PREVIEW_SIZE {
+				logMsg += line + "\n"
+			} else if i == CODE_PREVIEW_SIZE {
+				logMsg += "...\n"
+			}
 		}
+		fmt.Print(logMsg)
 	}
-	fmt.Print(logMsg)
 
 	resp, err := oac.client.CreateChatCompletion(
 		context.Background(),
@@ -83,10 +92,43 @@ func (oac *OpenAiClient) GetCompletion(prompt string) (*string, error) {
 	}
 
 	fmt.Printf(
-		"PromptTokens:\t\t%d\nCompletionTokens:\t\t%d\nTotalTokens:\t\t%d\n",
+		"PromptTokens:\t\t%d\nCompletionTokens:\t%d\nTotalTokens:\t\t%d\n",
 		resp.Usage.PromptTokens,
 		resp.Usage.CompletionTokens,
 		resp.Usage.TotalTokens,
 	)
-	return &resp.Choices[0].Message.Content, nil
+	firstDraft := &resp.Choices[0].Message.Content
+
+	resp2, err2 := oac.client.CreateChatCompletion(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			Model: openai.GPT3Dot5Turbo,
+			Messages: []openai.ChatCompletionMessage{
+				{
+					Role:    openai.ChatMessageRoleSystem,
+					Content: systemMessage,
+				},
+				{
+					Role:    openai.ChatMessageRoleUser,
+					Content: prompt,
+				},
+				{
+					Role:    openai.ChatMessageRoleAssistant,
+					Content: *firstDraft,
+				},
+				{
+					Role:    openai.ChatMessageRoleUser,
+					Content: followUpMessage,
+				},
+			},
+		},
+	)
+	if err2 != nil {
+		return nil, err2
+	}
+	secondResponse := &resp2.Choices[0].Message.Content
+	if strings.Contains(*secondResponse, "No changes") {
+		return firstDraft, nil
+	}
+	return &resp2.Choices[0].Message.Content, nil
 }
