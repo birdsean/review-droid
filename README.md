@@ -13,7 +13,7 @@ Comment Posting: Posts comments directly on the pull request within the GitHub i
 - [ ] GitHub App OAuth: Implement the OAuth flow to allow users to authenticate with GitHub and authorize the plugin to access their repositories. Implement as a GitHub App.
 - [ ] Webhook Listener: Implement the functionality to listen for pull request events from GitHub.
 - [ ] Make it into a CLI
-- [ ] Find a way to mark code as "already reviewed" to save some $$$. Same with comment evaluation.
+- [ ] Find a way to mark code as "already reviewed" to save some $$$. Perhaps review on a commit basis. Same with comment evaluation.
 - [ ] Listen to conversation reply events and continue the conversation.
 
 ## Entities
