@@ -104,7 +104,7 @@ func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, erro
 		fmt.Print(logMsg)
 	}
 
-	firstDraft, err := oac.RequestCompletion([]openai.ChatCompletionMessage{
+	conversation := []openai.ChatCompletionMessage{
 		{
 			Role:    openai.ChatMessageRoleSystem,
 			Content: systemMessage,
@@ -113,20 +113,14 @@ func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, erro
 			Role:    openai.ChatMessageRoleUser,
 			Content: prompt,
 		},
-	})
+	}
+
+	firstDraft, err := oac.RequestCompletion(conversation)
 	if err != nil {
 		return nil, err
 	}
 
-	secondDraft, err := oac.RequestCompletion([]openai.ChatCompletionMessage{
-		{
-			Role:    openai.ChatMessageRoleSystem,
-			Content: systemMessage,
-		},
-		{
-			Role:    openai.ChatMessageRoleUser,
-			Content: prompt,
-		},
+	conversation = append(conversation, []openai.ChatCompletionMessage{
 		{
 			Role:    openai.ChatMessageRoleAssistant,
 			Content: firstDraft,
@@ -135,7 +129,9 @@ func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, erro
 			Role:    openai.ChatMessageRoleUser,
 			Content: followUpMessage,
 		},
-	})
+	}...)
+
+	secondDraft, err := oac.RequestCompletion(conversation)
 	if err != nil {
 		return nil, err
 	}
