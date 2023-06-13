@@ -10,6 +10,7 @@ import (
 	"github.com/birdsean/review-droid/openai"
 	"github.com/birdsean/review-droid/transformer"
 	"github.com/google/go-github/v53/github"
+	openai_api "github.com/sashabaranov/go-openai"
 )
 
 var DEBUG = os.Getenv("DEBUG") == "true"
@@ -94,11 +95,42 @@ func generateComments(segment string) *string {
 	return completion
 }
 
-func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoClient) {
+func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoClient) error {
 	// List review comments on a pull request
 	comments, err := client.GetPrComments(pr)
 	if err != nil {
 		log.Fatalf("Failed to get comments: %v", err)
 	}
-	fmt.Printf("Comments: %v\n", comments)
+
+	for _, commentDetails := range comments {
+		comment := commentDetails.GetBody()
+		diffHunk := commentDetails.GetDiffHunk()
+
+		openaiClient := openai.OpenAiClient{}
+		openaiClient.Init()
+		conversation := []openai_api.ChatCompletionMessage{
+			{
+				Role:    openai_api.ChatMessageRoleSystem,
+				Content: `You are an expert code review quality evaluator.`,
+			},
+			{
+				Role:    openai_api.ChatMessageRoleUser,
+				Content: fmt.Sprintf("Please summarize what this code is doing:\n%s", diffHunk),
+			},
+		}
+		completion, err := openaiClient.RequestCompletion(conversation)
+		if err != nil {
+			return err
+		}
+		conversation = append(conversation, openai_api.ChatCompletionMessage{
+			Role:    openai_api.ChatMessageRoleAssistant,
+			Content: completion,
+		}, openai_api.ChatCompletionMessage{
+			Role:    openai_api.ChatMessageRoleUser,
+			Content: fmt.Sprintf("Please rate the quality of this code review comment on a scale of 1-5:\n%s\nOnly respond with the number.", comment),
+		})
+		final, err := openaiClient.RequestCompletion(conversation)
+
+		fmt.Printf("Comment: '%s' got a score of %s\n", comment, final)
+	}
 }

@@ -55,16 +55,20 @@ func (oac *OpenAiClient) Init() {
 	oac.client = openai.NewClient(openaiToken)
 }
 
-func printTokenUsage(response openai.ChatCompletionResponse) {
+func printTokenUsage(response openai.ChatCompletionResponse, countInputMessages int) {
+	content := response.Choices[0].Message.Content
+	if len(content) > 100 {
+		content = content[:100]
+	}
 	fmt.Printf(
-		"PromptTokens:\t\t%d\nCompletionTokens:\t%d\nTotalTokens:\t\t%d\n",
-		response.Usage.PromptTokens,
-		response.Usage.CompletionTokens,
+		"CountInputMessages:\t\t%d\nTotalTokens:\t\t%d\nPreview:\t\t%s\n******************************\n",
+		countInputMessages,
 		response.Usage.TotalTokens,
+		content,
 	)
 }
 
-func (oac *OpenAiClient) getCompletion(messages []openai.ChatCompletionMessage) (string, error) {
+func (oac *OpenAiClient) RequestCompletion(messages []openai.ChatCompletionMessage) (string, error) {
 	resp, err := oac.client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
@@ -77,7 +81,7 @@ func (oac *OpenAiClient) getCompletion(messages []openai.ChatCompletionMessage) 
 		return "", err
 	}
 
-	printTokenUsage(resp)
+	printTokenUsage(resp, len(messages))
 	return resp.Choices[0].Message.Content, nil
 }
 
@@ -96,7 +100,7 @@ func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, erro
 		fmt.Print(logMsg)
 	}
 
-	firstDraft, err := oac.getCompletion([]openai.ChatCompletionMessage{
+	firstDraft, err := oac.RequestCompletion([]openai.ChatCompletionMessage{
 		{
 			Role:    openai.ChatMessageRoleSystem,
 			Content: systemMessage,
@@ -110,7 +114,7 @@ func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, erro
 		return nil, err
 	}
 
-	secondDraft, err := oac.getCompletion([]openai.ChatCompletionMessage{
+	secondDraft, err := oac.RequestCompletion([]openai.ChatCompletionMessage{
 		{
 			Role:    openai.ChatMessageRoleSystem,
 			Content: systemMessage,
