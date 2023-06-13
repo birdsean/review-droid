@@ -25,6 +25,8 @@ const (
 		If a unit test could use some more test cases, prefix your comment with "Suggested Test Cases:".
 		If a method or class is too big, prefix your comment with "Refactor Suggestion:".
 		If you see lots of duplicated code, prefix your comment with "Refactor Suggestion:".
+		If a function or variable could be named more descriptively, prefix your comment with "Suggestion:".
+		Comment on all "TODO" comments.
 		Copy the "+" or "-" into your comment prefix before the line number. 
 		Only rarely comment on a line that starts with "-".
 		Do not comment on imports.

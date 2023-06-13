@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/birdsean/review-droid/comments"
 	"github.com/birdsean/review-droid/github_client"
@@ -38,7 +39,7 @@ func main() {
 				// TODO post comment to file.
 			}
 		}
-		err := evaluateComments(pr, client)
+		err := EvaluateReviewQuality(pr, client)
 		if err != nil {
 			log.Printf("Failed to evaluate comments: %v\n\n", err)
 		}
@@ -99,7 +100,7 @@ func generateComments(segment string) *string {
 	return completion
 }
 
-func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoClient) error {
+func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRepoClient) error {
 	// List review comments on a pull request
 	comments, err := client.GetPrComments(pr)
 	if err != nil {
@@ -115,7 +116,7 @@ func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoCli
 		conversation := []openai_api.ChatCompletionMessage{
 			{
 				Role:    openai_api.ChatMessageRoleSystem,
-				Content: `You are an expert code review quality evaluator.`,
+				Content: `You are an expert code review quality evaluator. ALL COMMENTS ABOUT IMPORTS GET A 1`,
 			},
 			{
 				Role:    openai_api.ChatMessageRoleUser,
@@ -131,7 +132,7 @@ func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoCli
 			Content: completion,
 		}, openai_api.ChatCompletionMessage{
 			Role:    openai_api.ChatMessageRoleUser,
-			Content: fmt.Sprintf("Please rate the quality of this code review comment on a scale of 1-5:\n%s\nOnly respond with the number. ALL COMMENTS ABOUT IMPORTS GET A 1.", comment),
+			Content: fmt.Sprintf("Please rate the quality of this code review comment on a scale of 1-5:\n%s\nOnly respond with the number.", comment),
 		})
 		final, err := openaiClient.RequestCompletion(conversation)
 		if err != nil {
@@ -139,23 +140,26 @@ func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoCli
 		}
 
 		// convert "final" first char to int
-		score, err := strconv.Atoi(final[0:1])
-		if err != nil {
-			return err
-		}
-		if score < 3 {
-			fmt.Printf("Comment: '%s' got a score of %s. Deleting.\n", comment, final)
-			err := client.DeleteComment(commentDetails)
+		firstChar := final[0:1]
+		if strings.Contains("12345", firstChar) {
+			score, err := strconv.Atoi(firstChar)
 			if err != nil {
 				return err
 			}
-			continue
-		} else if len(final) > 1 {
-			// reply to the comment
-			fmt.Printf("Comment: '%s' got a score of %s. Keeping.\n", comment, final)
-			err := client.ReplyToComment(pr, commentDetails, fmt.Sprintf("Thank you for your feedback! The AI gives your comment a score of %s", final))
-			if err != nil {
-				return err
+			if score < 3 {
+				fmt.Printf("Comment: '%s' got a score of %s. Deleting.\n", comment, final)
+				err := client.DeleteComment(commentDetails)
+				if err != nil {
+					return err
+				}
+				continue
+			} else if len(final) > 1 {
+				// reply to the comment
+				fmt.Printf("Comment: '%s' got a score of %s. Keeping.\n", comment, final)
+				err := client.ReplyToComment(pr, commentDetails, fmt.Sprintf("Thank you for your feedback! The AI gives your comment a score of %s", final))
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

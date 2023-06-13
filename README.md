@@ -14,6 +14,7 @@ Comment Posting: Posts comments directly on the pull request within the GitHub i
 - [ ] Webhook Listener: Implement the functionality to listen for pull request events from GitHub.
 - [ ] Make it into a CLI
 - [ ] Find a way to mark code as "already reviewed" to save some $$$. Same with comment evaluation.
+- [ ] Listen to conversation reply events and continue the conversation.
 
 ## Entities
 * TBD
