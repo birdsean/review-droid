@@ -13,6 +13,7 @@ This is a simple app that will utilize AI to do an initial pass on your code rev
 ### Backlog
 - [ ] GitHub App OAuth: Implement the OAuth flow to allow users to authenticate with GitHub and authorize the plugin to access their repositories. Implement as a GitHub App.
 - [ ] Webhook Listener: Implement the functionality to listen for pull request events from GitHub.
+- [ ] Sometimes the model returns a range of line numbers (e.g. 18-24). Comment over that whole range instead of first line.
 
 ## Entities
 * TBD

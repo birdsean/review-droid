@@ -1,11 +1,12 @@
-package github
+package github_client
 
 import (
 	"context"
 	"log"
 	"os"
 
-	"github.com/google/go-github/github"
+	"github.com/birdsean/review-droid/comments"
+	"github.com/google/go-github/v53/github"
 	"golang.org/x/oauth2"
 )
 
@@ -51,4 +52,32 @@ func (grc *GithubRepoClient) GetPrs() ([]*github.PullRequest, error) {
 func (grc *GithubRepoClient) GetPrDiff(pr *github.PullRequest) (string, error) {
 	diff, _, err := grc.client.PullRequests.GetRaw(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), github.RawOptions{Type: github.Diff})
 	return diff, err
+}
+
+func (grc *GithubRepoClient) PostComment(pr *github.PullRequest, comment *github.PullRequestComment) error {
+	_, _, err := grc.client.PullRequests.CreateComment(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), comment)
+	return err
+}
+
+func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comment, commitID string) *github.PullRequestComment {
+	// Remove "a/" or "b/" from file address
+	if parsed.FileAddress[:2] == "a/" || parsed.FileAddress[:2] == "b/" {
+		parsed.FileAddress = parsed.FileAddress[2:]
+	}
+
+	comment := &github.PullRequestComment{
+		Body:     github.String(parsed.CommentBody),
+		Path:     github.String(parsed.FileAddress),
+		CommitID: github.String(commitID),
+		Side:     github.String(parsed.Side),
+		Line:     github.Int(parsed.EndLine),
+	}
+
+	if parsed.EndLine == 0 {
+		comment.Line = github.Int(parsed.StartLine)
+	} else {
+		comment.Line = github.Int(parsed.StartLine)
+	}
+
+	return comment
 }

@@ -1,18 +1,21 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 
-	"github.com/birdsean/review-droid/github"
+	"github.com/birdsean/review-droid/comments"
+	"github.com/birdsean/review-droid/github_client"
 	"github.com/birdsean/review-droid/openai"
 	"github.com/birdsean/review-droid/transformer"
+	"github.com/google/go-github/v53/github"
 )
 
+var DEBUG = os.Getenv("DEBUG") == "true"
+
 func main() {
-	client := github.GithubRepoClient{}
+	client := github_client.GithubRepoClient{}
 	client.Init()
 
 	prs, err := client.GetPrs()
@@ -22,51 +25,70 @@ func main() {
 
 	// Iterate over each pull request
 	for _, pr := range prs {
-		fmt.Printf("PR #%d: %s\n", pr.GetNumber(), pr.GetTitle())
-
-		fmt.Printf("Getting diff for PR #%d\n", pr.GetNumber())
-		diff, err := client.GetPrDiff(pr)
-		if err != nil {
-			log.Fatalf("Failed to get raw diff: %v", err)
+		comments := reviewPR(pr, client)
+		commitId := pr.GetHead().GetSHA()
+		fmt.Printf("Posting %d comments to PR #%d\n", len(comments), pr.GetNumber())
+		for _, comment := range comments {
+			ghComment := client.ParsedCommentToGithubComment(comment, commitId)
+			err := client.PostComment(pr, ghComment)
+			if err != nil {
+				fmt.Printf("Failed to post comment: %v\n", err)
+				fmt.Printf("Comment: %v\n", ghComment)
+			}
 		}
-
-		diffTransformer := transformer.DiffTransformer{}
-		diffTransformer.Transform(diff)
-
-		segments := diffTransformer.GetSegments()
-		allComments := []string{}
-		fmt.Printf("Getting commments for %d segments\n", len(segments))
-		for _, segment := range segments {
-			comment := retrieveComments(segment)
-			allComments = append(allComments, comment)
-		}
-
-		writeResults(allComments)
 	}
 }
 
-func retrieveComments(segment string) string {
+func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*comments.Comment {
+	fmt.Printf("PR #%d: %s\n", pr.GetNumber(), pr.GetTitle())
+
+	diff, err := client.GetPrDiff(pr)
+	if err != nil {
+		log.Fatalf("Failed to get raw diff: %v", err)
+	}
+
+	diffTransformer := transformer.DiffTransformer{}
+	diffTransformer.Transform(diff)
+
+	fileSegments := diffTransformer.GetFileSegments()
+	allComments := []*comments.Comment{}
+
+	fmt.Printf("Getting comments for %d segments\n", len(fileSegments))
+	for filename, segments := range fileSegments {
+		for _, segment := range segments {
+			comment := retrieveComments(segment)
+			if comment == nil {
+				continue
+			}
+			zippedComments, err := comments.ZipComment(segment, *comment, filename, DEBUG)
+			if err != nil {
+				log.Fatalf("Failed to zip comment: %v", err)
+			}
+			allComments = append(allComments, zippedComments...)
+			if DEBUG && len(allComments) >= 1 {
+				break
+			}
+		}
+		if DEBUG && len(allComments) >= 1 {
+			break
+		}
+	}
+
+	return allComments
+}
+
+func retrieveComments(segment string) *string {
 	openAiClient := openai.OpenAiClient{}
 	openAiClient.Init()
-	completion, err := openAiClient.GetCompletion(segment)
+	completion, err := openAiClient.GetCompletion(segment, DEBUG)
 	if err != nil {
 		fmt.Printf("Failed to get completion: %v\n", err)
 	}
 
-	fmt.Println("********************")
-	fmt.Println(*completion)
-	fmt.Println("********************")
-	return *completion
-}
-
-func writeResults(comments []string) {
-	fileContents, err := json.Marshal(comments)
-	if err != nil {
-		log.Fatalf("Failed to marshal comments: %v", err)
+	if DEBUG && completion != nil {
+		fmt.Println("********************")
+		fmt.Println(*completion)
+		fmt.Println("********************")
 	}
-	// save fileContents to results.json
-	err = ioutil.WriteFile("results.json", fileContents, 0644)
-	if err != nil {
-		log.Fatalf("Failed to write comments to file: %v", err)
-	}
+	return completion
 }
