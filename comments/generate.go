@@ -70,6 +70,7 @@ func generateComment(rawComment, originalCode, filename string, debug bool) *Com
 	for _, val := range sideMatch {
 		if strings.Contains(val, "+") {
 			side = "RIGHT"
+			break
 		}
 	}
 

@@ -30,7 +30,8 @@ func main() {
 			ghComment := client.ParsedCommentToGithubComment(comment, commitId)
 			err := client.PostComment(pr, ghComment)
 			if err != nil {
-				log.Fatalf("Failed to post comment: %v", err)
+				fmt.Printf("Failed to post comment: %v\n", err)
+				fmt.Printf("Comment: %v\n", ghComment)
 			}
 		}
 	}

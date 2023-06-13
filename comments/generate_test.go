@@ -72,6 +72,20 @@ func Test_generateComment(t *testing.T) {
 				Side:        "RIGHT",
 			},
 		},
+		{
+			name: "prioritize plus over minus",
+			args: args{
+				"[+ Line 12-13] This could use some comments to explain what is being stored in these maps.",
+				"12 + 	fileCache := make(map[string]string)",
+				"test.go",
+			},
+			want: &Comment{
+				CommentBody: "This could use some comments to explain what is being stored in these maps.",
+				FileAddress: "test.go",
+				Side:        "RIGHT",
+				CodeLine:    12,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
