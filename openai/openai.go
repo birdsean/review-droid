@@ -130,5 +130,5 @@ func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, erro
 	if strings.Contains(*secondResponse, "No changes") {
 		return firstDraft, nil
 	}
-	return &resp2.Choices[0].Message.Content, nil
+	return secondResponse, nil
 }
