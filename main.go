@@ -36,7 +36,7 @@ func main() {
 			err := client.PostComment(pr, ghComment)
 			if err != nil {
 				fmt.Printf("Failed to post comment: %v\n", err)
-				// TODO post comment to file.
+				// TODO post comment to entire file if failed on a line.
 			}
 		}
 		err := EvaluateReviewQuality(pr, client)
