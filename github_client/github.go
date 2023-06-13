@@ -86,3 +86,8 @@ func (grc *GithubRepoClient) GetPrComments(pr *github.PullRequest) ([]*github.Pu
 	comments, _, err := grc.client.PullRequests.ListComments(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), &github.PullRequestListCommentsOptions{})
 	return comments, err
 }
+
+func (grc *GithubRepoClient) DeleteComment(comment *github.PullRequestComment) error {
+	_, err := grc.client.PullRequests.DeleteComment(grc.ctx, grc.owner, grc.repo, comment.GetID())
+	return err
+}

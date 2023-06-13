@@ -23,6 +23,8 @@ const (
 		If the problem is a request for clarification, prefix your comment with "Clarification:".
 		If a unit test of critical functionality is missing, prefix your comment with "Missing Test:".
 		If a unit test could use some more test cases, prefix your comment with "Suggested Test Cases:".
+		If a method or class is too big, prefix your comment with "Refactor Suggestion:".
+		If you see lots of duplicated code, prefix your comment with "Refactor Suggestion:".
 		Copy the "+" or "-" into your comment prefix before the line number. 
 		Only rarely comment on a line that starts with "-".
 		Do not comment on imports.
@@ -35,11 +37,11 @@ const (
 	`
 	CODE_PREVIEW_SIZE = 4
 	followUpMessage   = `Please make correct any line references you may have gone wrong.
-	Remove low quality comments. 
-	Improve your answers where appropriate. 
+	If you answered "No comments", respond with "No comments" again.
+	Remove low quality comments, if you remove all comments, respond with "No comments". 
+	Rewrite your comments if they need it. 
 	Remove all comments that have to do with import statements.
 	Maintain the same format as your first response.
-	If you answered "No comments", respond with "No comments" again.
 	If no changes are needed from your last response, respond with "No changes".`
 )
 
@@ -61,7 +63,7 @@ func printTokenUsage(response openai.ChatCompletionResponse, countInputMessages 
 		content = content[:100]
 	}
 	fmt.Printf(
-		"CountInputMessages:\t\t%d\nTotalTokens:\t\t%d\nPreview:\t\t%s\n******************************\n",
+		"CountInputMessages:\t%d\nTotalTokens:\t\t%d\nPreview:\t\t%s\n******************************\n",
 		countInputMessages,
 		response.Usage.TotalTokens,
 		content,

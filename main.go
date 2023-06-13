@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/birdsean/review-droid/comments"
 	"github.com/birdsean/review-droid/github_client"
@@ -130,8 +131,25 @@ func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoCli
 			Content: fmt.Sprintf("Please rate the quality of this code review comment on a scale of 1-5:\n%s\nOnly respond with the number.", comment),
 		})
 		final, err := openaiClient.RequestCompletion(conversation)
+		if err != nil {
+			return err
+		}
 
-		fmt.Printf("Comment: '%s' got a score of %s\n", comment, final)
+		// convert "final" to int
+		score, err := strconv.Atoi(final)
+		if err != nil {
+			return err
+		}
+		if score < 3 {
+			fmt.Printf("Comment: '%s' got a score of %s. Deleting.\n", comment, final)
+			err := client.DeleteComment(commentDetails)
+			if err != nil {
+				return err
+			}
+			continue
+		} else {
+			fmt.Printf("Comment: '%s' got a score of %s. Keeping.\n", comment, final)
+		}
 	}
 	return nil
 }
