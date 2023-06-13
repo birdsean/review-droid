@@ -23,6 +23,7 @@ const (
 		If a unit test of critical functionality is missing, prefix your comment with "Missing Test:".
 		If a unit test could use some more test cases, prefix your comment with "Suggested Test Cases:".
 		Copy the "+" or "-" into your comment prefix before the line number. 
+		Only rarely on a line that starts with "-".
 		An example response would look like this:
 			[- Line 2] Bug: 'countPizzas' is being used elsewhere and still needs to be initialized
 			[+ Line 42] Readability: consider saving this magic number to a variable

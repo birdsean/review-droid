@@ -24,7 +24,7 @@ func Test_generateComment(t *testing.T) {
 				"test.go",
 			},
 			want: &Comment{
-				CodeLine:    8,
+				StartLine:   8,
 				CommentBody: "Potential Bug: Looks like the entire test function has been removed. Is this intentional?",
 				FileAddress: "test.go",
 				Side:        "LEFT",
@@ -38,7 +38,8 @@ func Test_generateComment(t *testing.T) {
 				"test.go",
 			},
 			want: &Comment{
-				CodeLine:    8,
+				StartLine:   8,
+				EndLine:     14,
 				CommentBody: "Potential Bug: Looks like the entire test function has been removed. Is this intentional?",
 				FileAddress: "test.go",
 				Side:        "LEFT",
@@ -52,10 +53,10 @@ func Test_generateComment(t *testing.T) {
 				"test.go",
 			},
 			want: &Comment{
-				CodeLine:    8,
+				StartLine:   8,
 				CommentBody: "Suggestion: Consider renaming `numberedRawDiff` to `numberedDiff` for simplicity",
 				FileAddress: "test.go",
-				Side:        "LEFT",
+				Side:        "RIGHT",
 			},
 		},
 		{
@@ -66,7 +67,7 @@ func Test_generateComment(t *testing.T) {
 				"test.go",
 			},
 			want: &Comment{
-				CodeLine:    8,
+				StartLine:   8,
 				CommentBody: "Suggestion: Consider renaming `numberedRawDiff` to `numberedDiff` for simplicity",
 				FileAddress: "test.go",
 				Side:        "RIGHT",
@@ -83,7 +84,8 @@ func Test_generateComment(t *testing.T) {
 				CommentBody: "This could use some comments to explain what is being stored in these maps.",
 				FileAddress: "test.go",
 				Side:        "RIGHT",
-				CodeLine:    12,
+				StartLine:   12,
+				EndLine:     13,
 			},
 		},
 	}
