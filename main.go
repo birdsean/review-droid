@@ -116,7 +116,6 @@ func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRe
 	}
 
 	fmt.Printf("Evaluating %d comments. %d were filtered.\n", len(filteredComments), len(comments)-len(filteredComments))
-	return nil
 	for _, commentDetails := range filteredComments {
 
 		comment := commentDetails.GetBody()
@@ -158,7 +157,7 @@ func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRe
 				return err
 			}
 			if score < 3 {
-				fmt.Printf("Comment: '%s' got a score of %s. Deleting.\n", comment, final)
+				fmt.Printf("Score:\t\t%d - Deleting\nComment:\t\t'%s'\n.", score, comment)
 				err := client.DeleteComment(commentDetails)
 				if err != nil {
 					return err
@@ -166,7 +165,7 @@ func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRe
 				continue
 			} else if len(final) > 1 {
 				// reply to the comment
-				fmt.Printf("Comment: '%s' got a score of %s. Keeping.\n", comment, final)
+				fmt.Printf("Score:\t\t%d - Keeping\nComment:\t\t'%s'\n", score, comment)
 				err := client.ReplyToComment(pr, commentDetails, fmt.Sprintf("Thank you for your feedback! The AI gives your comment a score of %s", final))
 				if err != nil {
 					return err
