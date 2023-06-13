@@ -55,6 +55,32 @@ func (oac *OpenAiClient) Init() {
 	oac.client = openai.NewClient(openaiToken)
 }
 
+func printTokenUsage(response openai.ChatCompletionResponse) {
+	fmt.Printf(
+		"PromptTokens:\t\t%d\nCompletionTokens:\t%d\nTotalTokens:\t\t%d\n",
+		response.Usage.PromptTokens,
+		response.Usage.CompletionTokens,
+		response.Usage.TotalTokens,
+	)
+}
+
+func (oac *OpenAiClient) getCompletion(messages []openai.ChatCompletionMessage) (string, error) {
+	resp, err := oac.client.CreateChatCompletion(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			Model:    openai.GPT3Dot5Turbo,
+			Messages: messages,
+		},
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	printTokenUsage(resp)
+	return resp.Choices[0].Message.Content, nil
+}
+
 func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, error) {
 
 	if debug {
@@ -70,65 +96,44 @@ func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, erro
 		fmt.Print(logMsg)
 	}
 
-	resp, err := oac.client.CreateChatCompletion(
-		context.Background(),
-		openai.ChatCompletionRequest{
-			Model: openai.GPT3Dot5Turbo,
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleSystem,
-					Content: systemMessage,
-				},
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: prompt,
-				},
-			},
+	firstDraft, err := oac.getCompletion([]openai.ChatCompletionMessage{
+		{
+			Role:    openai.ChatMessageRoleSystem,
+			Content: systemMessage,
 		},
-	)
-
+		{
+			Role:    openai.ChatMessageRoleUser,
+			Content: prompt,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf(
-		"PromptTokens:\t\t%d\nCompletionTokens:\t%d\nTotalTokens:\t\t%d\n",
-		resp.Usage.PromptTokens,
-		resp.Usage.CompletionTokens,
-		resp.Usage.TotalTokens,
-	)
-	firstDraft := &resp.Choices[0].Message.Content
-
-	resp2, err2 := oac.client.CreateChatCompletion(
-		context.Background(),
-		openai.ChatCompletionRequest{
-			Model: openai.GPT3Dot5Turbo,
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleSystem,
-					Content: systemMessage,
-				},
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: prompt,
-				},
-				{
-					Role:    openai.ChatMessageRoleAssistant,
-					Content: *firstDraft,
-				},
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: followUpMessage,
-				},
-			},
+	secondDraft, err := oac.getCompletion([]openai.ChatCompletionMessage{
+		{
+			Role:    openai.ChatMessageRoleSystem,
+			Content: systemMessage,
 		},
-	)
-	if err2 != nil {
-		return nil, err2
+		{
+			Role:    openai.ChatMessageRoleUser,
+			Content: prompt,
+		},
+		{
+			Role:    openai.ChatMessageRoleAssistant,
+			Content: firstDraft,
+		},
+		{
+			Role:    openai.ChatMessageRoleUser,
+			Content: followUpMessage,
+		},
+	})
+	if err != nil {
+		return nil, err
 	}
-	secondResponse := &resp2.Choices[0].Message.Content
-	if strings.Contains(*secondResponse, "No changes") {
-		return firstDraft, nil
+
+	if strings.Contains(secondDraft, "No changes") {
+		return &firstDraft, nil
 	}
-	return secondResponse, nil
+	return &secondDraft, nil
 }
