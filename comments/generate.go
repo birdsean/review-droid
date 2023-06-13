@@ -21,7 +21,7 @@ func ZipComment(segment, comments, filename string) ([]*Comment, error) {
 		if strings.Contains(comment, "No comment") {
 			continue
 		}
-		comment := generateComment(comment, segment, filename)
+		comment := generateComment(comment, segment, filename, true)
 		if comment == nil {
 			continue
 		}
@@ -30,7 +30,7 @@ func ZipComment(segment, comments, filename string) ([]*Comment, error) {
 	return parsedComments, nil
 }
 
-func generateComment(rawComment, originalCode, filename string) *Comment {
+func generateComment(rawComment, originalCode, filename string, debug bool) *Comment {
 	// Extract numbers out of square brackets
 	match := regexp.MustCompile(`^\[.*?(\d+)(?:-\d+)?\](.*)`).FindStringSubmatch(rawComment)
 	if len(match) == 0 {
@@ -57,10 +57,10 @@ func generateComment(rawComment, originalCode, filename string) *Comment {
 			return nil
 		}
 		if plusIdx == -1 {
-			sideMatch = []string{"", "", "-"}
+			sideMatch = []string{"", "-"}
 		}
 		if minusIdx == -1 {
-			sideMatch = []string{"", "", "+"}
+			sideMatch = []string{"", "+"}
 		}
 	}
 
@@ -70,10 +70,20 @@ func generateComment(rawComment, originalCode, filename string) *Comment {
 		side = "LEFT"
 	}
 
+	body := strings.Trim(commentBody, " ")
+	if debug {
+		body = body + fmt.Sprintf(
+			"\n[DEBUG INFO]\n[Original Code] %s", originalCode) + fmt.Sprintf(
+			"\n\n[File] %s", filename) + fmt.Sprintf(
+			"\n\n[Side] %s", side) + fmt.Sprintf(
+			"\n\n[Line] %d", lineInt) + fmt.Sprintf(
+			"\n\n[Raw Comment] %s", rawComment)
+	}
+
 	// compile comment body and code
 	return &Comment{
 		CodeLine:    lineInt,
-		CommentBody: strings.Trim(commentBody, " "),
+		CommentBody: body,
 		FileAddress: filename,
 		Side:        side,
 	}

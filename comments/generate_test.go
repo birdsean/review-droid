@@ -75,7 +75,7 @@ func Test_generateComment(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := generateComment(tt.args.rawComment, tt.args.originalCode, tt.args.filename); !reflect.DeepEqual(got, tt.want) {
+			if got := generateComment(tt.args.rawComment, tt.args.originalCode, tt.args.filename, false); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("generateComment() = %+v, want %+v", got, tt.want)
 			}
 		})
