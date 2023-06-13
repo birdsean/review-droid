@@ -35,6 +35,7 @@ func generateComment(rawComment, originalCode, filename string, debug bool) *Com
 	match := regexp.MustCompile(`^\[.*?(\d+)(?:-\d+)?\](.*)`).FindStringSubmatch(rawComment)
 	if len(match) == 0 {
 		fmt.Printf("Failed to find line of code in rawComment (skipping) %s\n", rawComment)
+		fmt.Printf("match: %v\n", match)
 		return nil
 	}
 
@@ -49,7 +50,7 @@ func generateComment(rawComment, originalCode, filename string, debug bool) *Com
 	// detect if there is a plus or minus in the square brackets
 	sideMatch := regexp.MustCompile(`^\[.*([+-]).*]`).FindStringSubmatch(rawComment)
 	if len(sideMatch) < 2 {
-		// find first + or - in original code
+		// find first + or - in original code. Generally not a a good idea, pretty rough.
 		plusIdx := strings.Index(originalCode, "+")
 		minusIdx := strings.Index(originalCode, "-")
 		if plusIdx == -1 && minusIdx == -1 {
@@ -64,20 +65,22 @@ func generateComment(rawComment, originalCode, filename string, debug bool) *Com
 		}
 	}
 
-	sideSymbol := sideMatch[1]
-	side := "RIGHT"
-	if sideSymbol == "-" {
-		side = "LEFT"
+	// detect if any values in sideMatch equal +
+	side := "LEFT"
+	for _, val := range sideMatch {
+		if strings.Contains(val, "+") {
+			side = "RIGHT"
+		}
 	}
 
 	body := strings.Trim(commentBody, " ")
 	if debug {
 		body = body + fmt.Sprintf(
-			"\n[DEBUG INFO]\n[Original Code] %s", originalCode) + fmt.Sprintf(
-			"\n\n[File] %s", filename) + fmt.Sprintf(
+			"\nDEBUG INFO\n[File] %s", filename) + fmt.Sprintf(
 			"\n\n[Side] %s", side) + fmt.Sprintf(
 			"\n\n[Line] %d", lineInt) + fmt.Sprintf(
-			"\n\n[Raw Comment] %s", rawComment)
+			"\n\n[Raw Comment] %s", rawComment) + fmt.Sprintf(
+			"\n[\n[Original Code] %s", originalCode)
 	}
 
 	// compile comment body and code
