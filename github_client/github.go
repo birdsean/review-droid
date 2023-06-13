@@ -81,3 +81,8 @@ func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comme
 
 	return comment
 }
+
+func (grc *GithubRepoClient) GetPrComments(pr *github.PullRequest) ([]*github.PullRequestComment, error) {
+	comments, _, err := grc.client.PullRequests.ListComments(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), &github.PullRequestListCommentsOptions{})
+	return comments, err
+}

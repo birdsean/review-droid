@@ -36,6 +36,7 @@ func main() {
 				fmt.Printf("Comment: %v\n", ghComment)
 			}
 		}
+		evaluateComments(pr, client)
 	}
 }
 
@@ -91,4 +92,13 @@ func generateComments(segment string) *string {
 		fmt.Println("********************")
 	}
 	return completion
+}
+
+func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoClient) {
+	// List review comments on a pull request
+	comments, err := client.GetPrComments(pr)
+	if err != nil {
+		log.Fatalf("Failed to get comments: %v", err)
+	}
+	fmt.Printf("Comments: %v\n", comments)
 }
