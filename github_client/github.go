@@ -2,7 +2,6 @@ package github_client
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -66,15 +65,18 @@ func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comme
 		parsed.FileAddress = parsed.FileAddress[2:]
 	}
 
-	fmt.Printf("Line of Code: %d\n", parsed.CodeLine)
-	fmt.Printf("File address: %s\n", parsed.FileAddress)
-
 	comment := &github.PullRequestComment{
 		Body:     github.String(parsed.CommentBody),
 		Path:     github.String(parsed.FileAddress),
 		CommitID: github.String(commitID),
 		Side:     github.String(parsed.Side),
-		Line:     github.Int(parsed.CodeLine),
+		Line:     github.Int(parsed.EndLine),
+	}
+
+	if parsed.EndLine == 0 {
+		comment.Line = github.Int(parsed.StartLine)
+	} else {
+		comment.Line = github.Int(parsed.StartLine)
 	}
 
 	return comment
