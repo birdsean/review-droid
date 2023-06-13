@@ -96,19 +96,23 @@ func (oac *OpenAiClient) RequestCompletion(messages []openai.ChatCompletionMessa
 	return resp.Choices[0].Message.Content, nil
 }
 
+func printCompletionInfo(prompt string) {
+	logMsg := "Evaluating code lines:\n"
+	splitLines := strings.Split(prompt, "\n")
+	for i, line := range splitLines {
+		if i < CODE_PREVIEW_SIZE || i > len(splitLines)-CODE_PREVIEW_SIZE {
+			logMsg += line + "\n"
+		} else if i == CODE_PREVIEW_SIZE {
+			logMsg += "...\n"
+		}
+	}
+	fmt.Print(logMsg)
+}
+
 func (oac *OpenAiClient) GetCompletion(prompt string, debug bool) (*string, error) {
 
 	if debug {
-		logMsg := "Evaluating code lines:\n"
-		splitLines := strings.Split(prompt, "\n")
-		for i, line := range splitLines {
-			if i < CODE_PREVIEW_SIZE || i > len(splitLines)-CODE_PREVIEW_SIZE {
-				logMsg += line + "\n"
-			} else if i == CODE_PREVIEW_SIZE {
-				logMsg += "...\n"
-			}
-		}
-		fmt.Print(logMsg)
+		printCompletionInfo(prompt)
 	}
 
 	conversation := []openai.ChatCompletionMessage{
