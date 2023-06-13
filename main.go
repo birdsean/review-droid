@@ -107,7 +107,18 @@ func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRe
 		log.Fatalf("Failed to get comments: %v", err)
 	}
 
-	for _, commentDetails := range comments {
+	// filter out comments that have been resolved
+	filteredComments := []*github.PullRequestComment{}
+	for _, comment := range comments {
+		if comment.GetPosition() != 0 && comment.GetInReplyTo() == 0 {
+			filteredComments = append(filteredComments, comment)
+		}
+	}
+
+	fmt.Printf("Evaluating %d comments. %d were filtered.\n", len(filteredComments), len(comments)-len(filteredComments))
+	return nil
+	for _, commentDetails := range filteredComments {
+
 		comment := commentDetails.GetBody()
 		diffHunk := commentDetails.GetDiffHunk()
 
@@ -116,7 +127,7 @@ func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRe
 		conversation := []openai_api.ChatCompletionMessage{
 			{
 				Role:    openai_api.ChatMessageRoleSystem,
-				Content: `You are an expert code review quality evaluator. ALL COMMENTS ABOUT IMPORTS GET A 1`,
+				Content: `You are an expert code review quality evaluator. You rate code review comments on how practical, actionable, and pleasing to a programmer they are. ALL COMMENTS ABOUT IMPORTS GET A 1`,
 			},
 			{
 				Role:    openai_api.ChatMessageRoleUser,
