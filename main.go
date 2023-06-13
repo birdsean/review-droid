@@ -133,4 +133,5 @@ func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoCli
 
 		fmt.Printf("Comment: '%s' got a score of %s\n", comment, final)
 	}
+	return nil
 }
