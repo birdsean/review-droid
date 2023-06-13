@@ -18,7 +18,7 @@ import (
 var DEBUG = os.Getenv("DEBUG") == "true"
 
 func main() {
-	client := NewGithubRepoClient()
+	client := github_client.NewGithubRepoClient()
 
 	prs, err := client.GetPrs()
 	if err != nil {

@@ -18,8 +18,8 @@ type GithubRepoClient struct {
 }
 
 // constructor
-func NewGithubRepoClient() *GithubRepoClient {
-	grc := &GithubRepoClient{}
+func NewGithubRepoClient() GithubRepoClient {
+	grc := GithubRepoClient{}
 	grc.Init()
 	return grc
 }
