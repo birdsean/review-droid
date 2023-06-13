@@ -17,6 +17,13 @@ type GithubRepoClient struct {
 	repo   string
 }
 
+// constructor
+func NewGithubRepoClient() *GithubRepoClient {
+	grc := &GithubRepoClient{}
+	grc.Init()
+	return grc
+}
+
 func (grc *GithubRepoClient) Init() {
 	// Set up authentication using a personal access token
 	token := os.Getenv("REVIEW_DROID_TOKEN")

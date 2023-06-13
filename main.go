@@ -18,8 +18,7 @@ import (
 var DEBUG = os.Getenv("DEBUG") == "true"
 
 func main() {
-	client := github_client.GithubRepoClient{}
-	client.Init()
+	client := NewGithubRepoClient()
 
 	prs, err := client.GetPrs()
 	if err != nil {
@@ -85,8 +84,7 @@ func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*
 }
 
 func generateComments(segment string) *string {
-	openAiClient := openai.OpenAiClient{}
-	openAiClient.Init()
+	openAiClient := openai.NewOpenAiClient()
 	completion, err := openAiClient.GetCompletion(segment, DEBUG)
 	if err != nil {
 		fmt.Printf("Failed to get completion: %v\n", err)
@@ -121,8 +119,7 @@ func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRe
 		comment := commentDetails.GetBody()
 		diffHunk := commentDetails.GetDiffHunk()
 
-		openaiClient := openai.OpenAiClient{}
-		openaiClient.Init()
+		openaiClient := openai.NewOpenAiClient()
 		conversation := []openai_api.ChatCompletionMessage{
 			{
 				Role:    openai_api.ChatMessageRoleSystem,

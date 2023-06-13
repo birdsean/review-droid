@@ -51,6 +51,13 @@ type OpenAiClient struct {
 	client *openai.Client
 }
 
+// constructor
+func NewOpenAiClient() *OpenAiClient {
+	oac := &OpenAiClient{}
+	oac.Init()
+	return oac
+}
+
 func (oac *OpenAiClient) Init() {
 	openaiToken := os.Getenv("OPENAI_TOKEN")
 	if openaiToken == "" {
