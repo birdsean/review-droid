@@ -38,6 +38,3 @@ go run main.go
 - [ ] Make it into a CLI
 - [ ] Find a way to mark code as "already reviewed" to save some $$$. Perhaps review on a commit basis. Same with comment evaluation.
 - [ ] Listen to conversation reply events and continue the conversation.
-
-## Entities
-* TBD
