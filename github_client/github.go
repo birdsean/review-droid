@@ -91,3 +91,8 @@ func (grc *GithubRepoClient) DeleteComment(comment *github.PullRequestComment) e
 	_, err := grc.client.PullRequests.DeleteComment(grc.ctx, grc.owner, grc.repo, comment.GetID())
 	return err
 }
+
+func (grc *GithubRepoClient) ReplyToComment(pr *github.PullRequest, comment *github.PullRequestComment, body string) error {
+	_, _, err := grc.client.PullRequests.CreateCommentInReplyTo(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), body, comment.GetID())
+	return err
+}

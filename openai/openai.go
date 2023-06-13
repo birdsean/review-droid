@@ -40,7 +40,7 @@ const (
 	If you answered "No comments", respond with "No comments" again.
 	Remove low quality comments, if you remove all comments, respond with "No comments". 
 	Rewrite your comments if they need it. 
-	Remove all comments that have to do with import statements.
+	REMOVE ALL COMMENTS that have to do with IMPORT STATEMENTS.
 	Maintain the same format as your first response.
 	If no changes are needed from your last response, respond with "No changes".`
 )

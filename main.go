@@ -35,10 +35,13 @@ func main() {
 			err := client.PostComment(pr, ghComment)
 			if err != nil {
 				fmt.Printf("Failed to post comment: %v\n", err)
-				fmt.Printf("Comment: %v\n", ghComment)
+				// TODO post comment to file.
 			}
 		}
-		evaluateComments(pr, client)
+		err := evaluateComments(pr, client)
+		if err != nil {
+			log.Printf("Failed to evaluate comments: %v\n\n", err)
+		}
 	}
 }
 
@@ -128,15 +131,15 @@ func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoCli
 			Content: completion,
 		}, openai_api.ChatCompletionMessage{
 			Role:    openai_api.ChatMessageRoleUser,
-			Content: fmt.Sprintf("Please rate the quality of this code review comment on a scale of 1-5:\n%s\nOnly respond with the number.", comment),
+			Content: fmt.Sprintf("Please rate the quality of this code review comment on a scale of 1-5:\n%s\nOnly respond with the number. ALL COMMENTS ABOUT IMPORTS GET A 1.", comment),
 		})
 		final, err := openaiClient.RequestCompletion(conversation)
 		if err != nil {
 			return err
 		}
 
-		// convert "final" to int
-		score, err := strconv.Atoi(final)
+		// convert "final" first char to int
+		score, err := strconv.Atoi(final[0:1])
 		if err != nil {
 			return err
 		}
@@ -147,8 +150,13 @@ func evaluateComments(pr *github.PullRequest, client github_client.GithubRepoCli
 				return err
 			}
 			continue
-		} else {
+		} else if len(final) > 1 {
+			// reply to the comment
 			fmt.Printf("Comment: '%s' got a score of %s. Keeping.\n", comment, final)
+			err := client.ReplyToComment(pr, commentDetails, fmt.Sprintf("Thank you for your feedback! The AI gives your comment a score of %s", final))
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
