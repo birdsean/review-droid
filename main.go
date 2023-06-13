@@ -56,7 +56,7 @@ func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*
 	fmt.Printf("Getting comments for %d segments\n", len(fileSegments))
 	for filename, segments := range fileSegments {
 		for _, segment := range segments {
-			comment := retrieveComments(segment)
+			comment := generateComments(segment)
 			if comment == nil {
 				continue
 			}
@@ -77,7 +77,7 @@ func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*
 	return allComments
 }
 
-func retrieveComments(segment string) *string {
+func generateComments(segment string) *string {
 	openAiClient := openai.OpenAiClient{}
 	openAiClient.Init()
 	completion, err := openAiClient.GetCompletion(segment, DEBUG)
