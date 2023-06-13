@@ -4,19 +4,21 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/birdsean/review-droid/comments"
 	"github.com/birdsean/review-droid/github_client"
 	"github.com/birdsean/review-droid/openai"
 	"github.com/birdsean/review-droid/transformer"
 	"github.com/google/go-github/v53/github"
+	openai_api "github.com/sashabaranov/go-openai"
 )
 
 var DEBUG = os.Getenv("DEBUG") == "true"
 
 func main() {
-	client := github_client.GithubRepoClient{}
-	client.Init()
+	client := github_client.NewGithubRepoClient()
 
 	prs, err := client.GetPrs()
 	if err != nil {
@@ -33,8 +35,12 @@ func main() {
 			err := client.PostComment(pr, ghComment)
 			if err != nil {
 				fmt.Printf("Failed to post comment: %v\n", err)
-				fmt.Printf("Comment: %v\n", ghComment)
+				// TODO post comment to entire file if failed on a line.
 			}
+		}
+		err := EvaluateReviewQuality(pr, client)
+		if err != nil {
+			log.Printf("Failed to evaluate comments: %v\n\n", err)
 		}
 	}
 }
@@ -56,7 +62,7 @@ func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*
 	fmt.Printf("Getting comments for %d segments\n", len(fileSegments))
 	for filename, segments := range fileSegments {
 		for _, segment := range segments {
-			comment := retrieveComments(segment)
+			comment := generateComments(segment)
 			if comment == nil {
 				continue
 			}
@@ -77,9 +83,8 @@ func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*
 	return allComments
 }
 
-func retrieveComments(segment string) *string {
-	openAiClient := openai.OpenAiClient{}
-	openAiClient.Init()
+func generateComments(segment string) *string {
+	openAiClient := openai.NewOpenAiClient()
 	completion, err := openAiClient.GetCompletion(segment, DEBUG)
 	if err != nil {
 		fmt.Printf("Failed to get completion: %v\n", err)
@@ -91,4 +96,79 @@ func retrieveComments(segment string) *string {
 		fmt.Println("********************")
 	}
 	return completion
+}
+
+func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRepoClient) error {
+	// List review comments on a pull request
+	comments, err := client.GetPrComments(pr)
+	if err != nil {
+		log.Fatalf("Failed to get comments: %v", err)
+	}
+
+	// filter out comments that have been resolved
+	filteredComments := []*github.PullRequestComment{}
+	for _, comment := range comments {
+		if comment.GetPosition() != 0 && comment.GetInReplyTo() == 0 {
+			filteredComments = append(filteredComments, comment)
+		}
+	}
+
+	fmt.Printf("Evaluating %d comments. %d were filtered.\n", len(filteredComments), len(comments)-len(filteredComments))
+	for _, commentDetails := range filteredComments {
+
+		comment := commentDetails.GetBody()
+		diffHunk := commentDetails.GetDiffHunk()
+
+		openaiClient := openai.NewOpenAiClient()
+		conversation := []openai_api.ChatCompletionMessage{
+			{
+				Role:    openai_api.ChatMessageRoleSystem,
+				Content: `You are an expert code review quality evaluator. You rate code review comments on how practical, actionable, and pleasing to a programmer they are. ALL COMMENTS ABOUT IMPORTS GET A 1`,
+			},
+			{
+				Role:    openai_api.ChatMessageRoleUser,
+				Content: fmt.Sprintf("Please summarize what this code is doing:\n%s", diffHunk),
+			},
+		}
+		completion, err := openaiClient.RequestCompletion(conversation)
+		if err != nil {
+			return err
+		}
+		conversation = append(conversation, openai_api.ChatCompletionMessage{
+			Role:    openai_api.ChatMessageRoleAssistant,
+			Content: completion,
+		}, openai_api.ChatCompletionMessage{
+			Role:    openai_api.ChatMessageRoleUser,
+			Content: fmt.Sprintf("Please rate the quality of this code review comment on a scale of 1-5:\n%s\nOnly respond with the number.", comment),
+		})
+		final, err := openaiClient.RequestCompletion(conversation)
+		if err != nil {
+			return err
+		}
+
+		// convert "final" first char to int
+		firstChar := final[0:1]
+		if strings.Contains("12345", firstChar) {
+			score, err := strconv.Atoi(firstChar)
+			if err != nil {
+				return err
+			}
+			if score < 3 {
+				fmt.Printf("Score:\t\t%d - Deleting\nComment:\t\t'%s'\n.", score, comment)
+				err := client.DeleteComment(commentDetails)
+				if err != nil {
+					return err
+				}
+				continue
+			} else if len(final) > 1 {
+				// reply to the comment
+				fmt.Printf("Score:\t\t%d - Keeping\nComment:\t\t'%s'\n", score, comment)
+				err := client.ReplyToComment(pr, commentDetails, fmt.Sprintf("Thank you for your feedback! The AI gives your comment a score of %s", final))
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }

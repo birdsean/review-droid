@@ -17,6 +17,13 @@ type GithubRepoClient struct {
 	repo   string
 }
 
+// constructor
+func NewGithubRepoClient() GithubRepoClient {
+	grc := GithubRepoClient{}
+	grc.Init()
+	return grc
+}
+
 func (grc *GithubRepoClient) Init() {
 	// Set up authentication using a personal access token
 	token := os.Getenv("REVIEW_DROID_TOKEN")
@@ -80,4 +87,19 @@ func (grc *GithubRepoClient) ParsedCommentToGithubComment(parsed *comments.Comme
 	}
 
 	return comment
+}
+
+func (grc *GithubRepoClient) GetPrComments(pr *github.PullRequest) ([]*github.PullRequestComment, error) {
+	comments, _, err := grc.client.PullRequests.ListComments(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), &github.PullRequestListCommentsOptions{})
+	return comments, err
+}
+
+func (grc *GithubRepoClient) DeleteComment(comment *github.PullRequestComment) error {
+	_, err := grc.client.PullRequests.DeleteComment(grc.ctx, grc.owner, grc.repo, comment.GetID())
+	return err
+}
+
+func (grc *GithubRepoClient) ReplyToComment(pr *github.PullRequest, comment *github.PullRequestComment, body string) error {
+	_, _, err := grc.client.PullRequests.CreateCommentInReplyTo(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), body, comment.GetID())
+	return err
 }
