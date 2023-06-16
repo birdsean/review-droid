@@ -7,9 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/birdsean/review-droid/clients"
 	"github.com/birdsean/review-droid/comments"
-	"github.com/birdsean/review-droid/github_client"
-	"github.com/birdsean/review-droid/openai"
 	"github.com/birdsean/review-droid/transformer"
 	"github.com/google/go-github/v53/github"
 	openai_api "github.com/sashabaranov/go-openai"
@@ -18,34 +17,34 @@ import (
 var DEBUG = os.Getenv("DEBUG") == "true"
 
 func main() {
-	client := github_client.NewGithubRepoClient()
+	githubClient := clients.NewGithubRepoClient()
 
-	prs, err := client.GetPrs()
+	prs, err := githubClient.GetPrs()
 	if err != nil {
 		log.Fatalf("Failed to get pull requests: %v", err)
 	}
 
 	// Iterate over each pull request
 	for _, pr := range prs {
-		comments := reviewPR(pr, client)
+		comments := reviewPR(pr, githubClient)
 		commitId := pr.GetHead().GetSHA()
 		fmt.Printf("Posting %d comments to PR #%d\n", len(comments), pr.GetNumber())
 		for _, comment := range comments {
-			ghComment := client.ParsedCommentToGithubComment(comment, commitId)
-			err := client.PostComment(pr, ghComment)
+			ghComment := githubClient.ParsedCommentToGithubComment(comment, commitId)
+			err := githubClient.PostComment(pr, ghComment)
 			if err != nil {
 				fmt.Printf("Failed to post comment: %v\n", err)
 				// TODO post comment to entire file if failed on a line.
 			}
 		}
-		err := EvaluateReviewQuality(pr, client)
+		err := EvaluateReviewQuality(pr, githubClient)
 		if err != nil {
 			log.Printf("Failed to evaluate comments: %v\n\n", err)
 		}
 	}
 }
 
-func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*comments.Comment {
+func reviewPR(pr *github.PullRequest, client clients.GithubRepoClient) []*comments.Comment {
 	fmt.Printf("PR #%d: %s\n", pr.GetNumber(), pr.GetTitle())
 
 	diff, err := client.GetPrDiff(pr)
@@ -84,7 +83,7 @@ func reviewPR(pr *github.PullRequest, client github_client.GithubRepoClient) []*
 }
 
 func generateComments(segment string) *string {
-	openAiClient := openai.NewOpenAiClient()
+	openAiClient := clients.NewOpenAiClient()
 	completion, err := openAiClient.GetCompletion(segment, DEBUG)
 	if err != nil {
 		fmt.Printf("Failed to get completion: %v\n", err)
@@ -98,7 +97,7 @@ func generateComments(segment string) *string {
 	return completion
 }
 
-func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRepoClient) error {
+func EvaluateReviewQuality(pr *github.PullRequest, client clients.GithubRepoClient) error {
 	// List review comments on a pull request
 	comments, err := client.GetPrComments(pr)
 	if err != nil {
@@ -119,7 +118,7 @@ func EvaluateReviewQuality(pr *github.PullRequest, client github_client.GithubRe
 		comment := commentDetails.GetBody()
 		diffHunk := commentDetails.GetDiffHunk()
 
-		openaiClient := openai.NewOpenAiClient()
+		openaiClient := clients.NewOpenAiClient()
 		conversation := []openai_api.ChatCompletionMessage{
 			{
 				Role:    openai_api.ChatMessageRoleSystem,
