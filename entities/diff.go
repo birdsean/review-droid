@@ -1,4 +1,4 @@
-package transformer
+package entities
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type DiffTransformer struct {
+type Diff struct {
 	rawDiff         string
 	numberedRawDiff string
 	fileDiffs       map[string]string
@@ -16,18 +16,20 @@ type DiffTransformer struct {
 
 const segmentLength = 4000
 
-func (dt *DiffTransformer) Transform(rawDiff string) {
-	dt.rawDiff = rawDiff
-	dt.numberRawDiff()
-	dt.splitIntoFiles()
-	dt.generateSegments()
+func NewDiff(rawDiff string) *Diff {
+	diff := Diff{}
+	diff.rawDiff = rawDiff
+	diff.numberRawDiff()
+	diff.splitIntoFiles()
+	diff.generateSegments()
+	return &diff
 }
 
-func (dt *DiffTransformer) GetFileSegments() map[string][]string {
+func (dt *Diff) GetFileSegments() map[string][]string {
 	return dt.fileSegments
 }
 
-func (dt *DiffTransformer) splitIntoFiles() {
+func (dt *Diff) splitIntoFiles() {
 	fileDiffs := strings.Split(dt.numberedRawDiff, "diff --git")
 	dt.fileDiffs = make(map[string]string)
 
@@ -52,7 +54,7 @@ func (dt *DiffTransformer) splitIntoFiles() {
 	}
 }
 
-func (dt *DiffTransformer) generateSegments() {
+func (dt *Diff) generateSegments() {
 	dt.fileSegments = make(map[string][]string)
 	for filename, diff := range dt.fileDiffs {
 		segments := []string{}
@@ -72,7 +74,7 @@ func (dt *DiffTransformer) generateSegments() {
 	}
 }
 
-func (dt *DiffTransformer) numberRawDiff() {
+func (dt *Diff) numberRawDiff() {
 	// number each line of the diff, looking at the header like "@@ -2,13 +2,15 @@" to know that the first line is line 2
 	splitDiff := strings.Split(dt.rawDiff, "\n")
 	rmLineNumber := 0

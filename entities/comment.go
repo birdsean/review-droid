@@ -1,10 +1,12 @@
-package comments
+package entities
 
 import (
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/google/go-github/v53/github"
 )
 
 type Comment struct {
@@ -15,7 +17,7 @@ type Comment struct {
 	Side        string
 }
 
-func ZipComment(segment, comments, filename string, debug bool) ([]*Comment, error) {
+func NewComments(segment, comments, filename string, debug bool) ([]*Comment, error) {
 	parsedComments := []*Comment{}
 	splitComments := strings.Split(comments, "\n")
 	for _, comment := range splitComments {
@@ -29,6 +31,39 @@ func ZipComment(segment, comments, filename string, debug bool) ([]*Comment, err
 		parsedComments = append(parsedComments, comment)
 	}
 	return parsedComments, nil
+}
+
+func FilterReplies(ghComments []*github.PullRequestComment) []*github.PullRequestComment {
+	filteredComments := []*github.PullRequestComment{}
+	for _, comment := range ghComments {
+		if comment.GetInReplyTo() == 0 {
+			filteredComments = append(filteredComments, comment)
+		}
+	}
+	return filteredComments
+}
+
+func (comment *Comment) ToGithubComment(commitID string) *github.PullRequestComment {
+	// Remove "a/" or "b/" from file address
+	if comment.FileAddress[:2] == "a/" || comment.FileAddress[:2] == "b/" {
+		comment.FileAddress = comment.FileAddress[2:]
+	}
+
+	ghComment := &github.PullRequestComment{
+		Body:     github.String(comment.CommentBody),
+		Path:     github.String(comment.FileAddress),
+		CommitID: github.String(commitID),
+		Side:     github.String(comment.Side),
+		Line:     github.Int(comment.EndLine),
+	}
+
+	if comment.EndLine == 0 {
+		ghComment.Line = github.Int(comment.StartLine)
+	} else {
+		ghComment.Line = github.Int(comment.StartLine)
+	}
+
+	return ghComment
 }
 
 func rangeStrToInts(rangeStr string) (int, int) {
