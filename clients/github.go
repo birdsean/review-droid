@@ -55,18 +55,18 @@ func (grc *GithubRepoClient) GetPrs() ([]*github.PullRequest, error) {
 	return prs, err
 }
 
-func (grc *GithubRepoClient) GetPrDiff(pr *github.PullRequest) (string, error) {
-	diff, _, err := grc.client.PullRequests.GetRaw(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), github.RawOptions{Type: github.Diff})
+func (grc *GithubRepoClient) GetPrDiff(prId int) (string, error) {
+	diff, _, err := grc.client.PullRequests.GetRaw(grc.ctx, grc.owner, grc.repo, prId, github.RawOptions{Type: github.Diff})
 	return diff, err
 }
 
-func (grc *GithubRepoClient) PostComment(pr *github.PullRequest, comment *github.PullRequestComment) error {
-	_, _, err := grc.client.PullRequests.CreateComment(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), comment)
+func (grc *GithubRepoClient) PostComment(prId int, comment *github.PullRequestComment) error {
+	_, _, err := grc.client.PullRequests.CreateComment(grc.ctx, grc.owner, grc.repo, prId, comment)
 	return err
 }
 
-func (grc *GithubRepoClient) GetPrComments(pr *github.PullRequest) ([]*github.PullRequestComment, error) {
-	comments, _, err := grc.client.PullRequests.ListComments(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), &github.PullRequestListCommentsOptions{})
+func (grc *GithubRepoClient) GetPrComments(prId int) ([]*github.PullRequestComment, error) {
+	comments, _, err := grc.client.PullRequests.ListComments(grc.ctx, grc.owner, grc.repo, prId, &github.PullRequestListCommentsOptions{})
 	return comments, err
 }
 
@@ -75,7 +75,7 @@ func (grc *GithubRepoClient) DeleteComment(comment *github.PullRequestComment) e
 	return err
 }
 
-func (grc *GithubRepoClient) ReplyToComment(pr *github.PullRequest, comment *github.PullRequestComment, body string) error {
-	_, _, err := grc.client.PullRequests.CreateCommentInReplyTo(grc.ctx, grc.owner, grc.repo, pr.GetNumber(), body, comment.GetID())
+func (grc *GithubRepoClient) ReplyToComment(prId int, comment *github.PullRequestComment, body string) error {
+	_, _, err := grc.client.PullRequests.CreateCommentInReplyTo(grc.ctx, grc.owner, grc.repo, prId, body, comment.GetID())
 	return err
 }
