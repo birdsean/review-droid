@@ -31,10 +31,3 @@ go run main.go
 > * GITHUB_OWNER (Owner of the repository you'd like to review)
 > * GITHUB_REPO (Name of the repository you'd like to review)
 > * OPENAI_TOKEN (OpenAI API Secret Token)
-
-### Backlog
-- [ ] GitHub App OAuth: Implement the OAuth flow to allow users to authenticate with GitHub and authorize the plugin to access their repositories. Implement as a GitHub App.
-- [ ] Webhook Listener: Implement the functionality to listen for pull request events from GitHub.
-- [ ] Make it into a CLI
-- [ ] Find a way to mark code as "already reviewed" to save some $$$. Perhaps review on a commit basis. Same with comment evaluation.
-- [ ] Listen to conversation reply events and continue the conversation.
