@@ -1,10 +1,12 @@
-package comments
+package entities
 
 import (
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/google/go-github/v53/github"
 )
 
 type Comment struct {
@@ -13,6 +15,29 @@ type Comment struct {
 	CommentBody string
 	FileAddress string
 	Side        string
+}
+
+func ParsedCommentToGithubComment(parsed *Comment, commitID string) *github.PullRequestComment {
+	// Remove "a/" or "b/" from file address
+	if parsed.FileAddress[:2] == "a/" || parsed.FileAddress[:2] == "b/" {
+		parsed.FileAddress = parsed.FileAddress[2:]
+	}
+
+	comment := &github.PullRequestComment{
+		Body:     github.String(parsed.CommentBody),
+		Path:     github.String(parsed.FileAddress),
+		CommitID: github.String(commitID),
+		Side:     github.String(parsed.Side),
+		Line:     github.Int(parsed.EndLine),
+	}
+
+	if parsed.EndLine == 0 {
+		comment.Line = github.Int(parsed.StartLine)
+	} else {
+		comment.Line = github.Int(parsed.StartLine)
+	}
+
+	return comment
 }
 
 func ZipComment(segment, comments, filename string, debug bool) ([]*Comment, error) {

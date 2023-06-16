@@ -8,8 +8,7 @@ import (
 	"strings"
 
 	"github.com/birdsean/review-droid/clients"
-	"github.com/birdsean/review-droid/comments"
-	"github.com/birdsean/review-droid/transformer"
+	"github.com/birdsean/review-droid/entities"
 	"github.com/google/go-github/v53/github"
 	openai_api "github.com/sashabaranov/go-openai"
 )
@@ -26,11 +25,11 @@ func main() {
 
 	// Iterate over each pull request
 	for _, pr := range prs {
-		comments := reviewPR(pr, githubClient)
+		comments := entities.Review(pr, githubClient) // TODO: call class instead of function
 		commitId := pr.GetHead().GetSHA()
 		fmt.Printf("Posting %d comments to PR #%d\n", len(comments), pr.GetNumber())
 		for _, comment := range comments {
-			ghComment := githubClient.ParsedCommentToGithubComment(comment, commitId)
+			ghComment := entities.ParsedCommentToGithubComment(comment, commitId)
 			err := githubClient.PostComment(pr, ghComment)
 			if err != nil {
 				fmt.Printf("Failed to post comment: %v\n", err)
@@ -42,59 +41,6 @@ func main() {
 			log.Printf("Failed to evaluate comments: %v\n\n", err)
 		}
 	}
-}
-
-func reviewPR(pr *github.PullRequest, client clients.GithubRepoClient) []*comments.Comment {
-	fmt.Printf("PR #%d: %s\n", pr.GetNumber(), pr.GetTitle())
-
-	diff, err := client.GetPrDiff(pr)
-	if err != nil {
-		log.Fatalf("Failed to get raw diff: %v", err)
-	}
-
-	diffTransformer := transformer.DiffTransformer{}
-	diffTransformer.Transform(diff)
-
-	fileSegments := diffTransformer.GetFileSegments()
-	allComments := []*comments.Comment{}
-
-	fmt.Printf("Getting comments for %d segments\n", len(fileSegments))
-	for filename, segments := range fileSegments {
-		for _, segment := range segments {
-			comment := generateComments(segment)
-			if comment == nil {
-				continue
-			}
-			zippedComments, err := comments.ZipComment(segment, *comment, filename, DEBUG)
-			if err != nil {
-				log.Fatalf("Failed to zip comment: %v", err)
-			}
-			allComments = append(allComments, zippedComments...)
-			if DEBUG && len(allComments) >= 1 {
-				break
-			}
-		}
-		if DEBUG && len(allComments) >= 1 {
-			break
-		}
-	}
-
-	return allComments
-}
-
-func generateComments(segment string) *string {
-	openAiClient := clients.NewOpenAiClient()
-	completion, err := openAiClient.GetCompletion(segment, DEBUG)
-	if err != nil {
-		fmt.Printf("Failed to get completion: %v\n", err)
-	}
-
-	if DEBUG && completion != nil {
-		fmt.Println("********************")
-		fmt.Println(*completion)
-		fmt.Println("********************")
-	}
-	return completion
 }
 
 func EvaluateReviewQuality(pr *github.PullRequest, client clients.GithubRepoClient) error {
