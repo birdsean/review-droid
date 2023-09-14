@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -67,6 +68,19 @@ func (oac *OpenAiClient) RequestCompletion(messages []openai.ChatCompletionMessa
 
 	if err != nil {
 		return "", err
+	}
+
+	// Create a new log file with the current time as its name
+	logFile, err := os.Create("logs/" + time.Now().Format("2006-01-02T15-04-05Z07-00") + ".log")
+	if err != nil {
+		log.Fatalf("Failed to create log file: %v", err)
+	}
+	defer logFile.Close()
+
+	// Write the request and response bodies to the log file
+	_, err = logFile.WriteString(fmt.Sprintf("Request:\n%v\n-----\nResponse:\n%v\n", messages, resp.Choices[0].Message.Content))
+	if err != nil {
+		log.Fatalf("Failed to write to log file: %v", err)
 	}
 
 	printTokenUsage(resp, len(messages))
